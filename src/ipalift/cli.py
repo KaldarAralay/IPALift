@@ -10,6 +10,7 @@ from . import __version__
 from .cpp_model import recover_cpp_model
 from .dispatch import resolve_objc_dispatch
 from .errors import IPALiftError
+from .full_run import FULL_RUN_STAGES, run_full_pipeline
 from .ghidra import decompile_workspace
 from .native_types import infer_native_types
 from .pipeline import analyze_ipa
@@ -25,6 +26,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subcommands = parser.add_subparsers(dest="command", required=True)
+    run_all = subcommands.add_parser(
+        "run-all", help="run the complete analysis and decompilation pipeline in dependency order"
+    )
+    run_all.add_argument("ipa", type=Path, help="path to a legally obtained decrypted IPA")
+    run_all.add_argument("--output", "-o", type=Path, required=True, help="analysis output directory")
+    run_all.add_argument(
+        "--ghidra-home", type=Path, help="Ghidra installation directory (otherwise use GHIDRA_HOME or tools/ghidra)"
+    )
+    run_all.add_argument(
+        "--function-timeout", type=int, default=30, help="decompiler timeout per function in seconds (default: 30)"
+    )
+    run_all.add_argument(
+        "--analysis-timeout", type=int, default=3600, help="Ghidra auto-analysis timeout in seconds (default: 3600)"
+    )
     analyze = subcommands.add_parser("analyze", help="validate, extract, and analyze an IPA")
     analyze.add_argument("ipa", type=Path, help="path to a legally obtained decrypted IPA")
     analyze.add_argument("--output", "-o", type=Path, required=True, help="analysis output directory")
@@ -94,6 +109,20 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.command == "run-all":
+            result = run_full_pipeline(
+                args.ipa,
+                args.output,
+                ghidra_home=args.ghidra_home,
+                function_timeout=args.function_timeout,
+                analysis_timeout=args.analysis_timeout,
+                on_stage=lambda index, total, stage: print(f"[{index}/{total}] {stage}", flush=True),
+            )
+            print("Completed full IPALift pipeline")
+            print(f"Workspace: {result.workspace}")
+            print(f"Completed stages: {len(result.completed_stages)}/{len(FULL_RUN_STAGES)}")
+            print(f"Final report: {result.final_report_path}")
+            return 0
         if args.command == "analyze":
             result = analyze_ipa(args.ipa, args.output)
             application = result.reports["application"]["facts"]

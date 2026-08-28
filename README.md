@@ -68,6 +68,17 @@ and either pass --ghidra-home or set GHIDRA_HOME.
 Use an output directory outside the source tree or under the ignored
 analysis-output directory.
 
+### Run the complete pipeline
+
+~~~powershell
+ipalift run-all path\to\Example.ipa --output analysis-output\example --ghidra-home C:\tools\ghidra_12.1.3_PUBLIC
+~~~
+
+`run-all` executes all ten stages in dependency order, including the second
+Objective-C dispatch/type-flow refinement pass. It prints each stage as it
+starts and stops on the first error. The individual commands below remain
+available when you want to inspect, resume, or repeat a specific stage.
+
 ### 1. Inspect and extract the IPA
 
 ~~~powershell
@@ -85,7 +96,7 @@ rejected before Ghidra starts.
 ipalift decompile analysis-output\example --ghidra-home C:\tools\ghidra_12.1.3_PUBLIC
 ~~~
 
-Optional controls:
+Both `run-all` and `decompile` accept:
 
 ~~~text
 --function-timeout SECONDS   Per-function decompiler limit (default: 30)
