@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/objc-type-flow.schema.json",
+  "title": "IPALift Objective-C type-flow analysis",
+  "$defs": {
+    "nullableString": {"type": ["string", "null"]},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "baselineArtifact": {
+      "type": "object",
+      "required": ["path", "projection_sha256"],
+      "properties": {
+        "path": {"const": "analysis/objc-dispatch.json"},
+        "projection_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "typeCandidate": {
+      "type": "object",
+      "required": [
+        "kind", "name", "class_name", "protocols", "confidence",
+        "hypothesis", "evidence_ids", "propagation_step_ids"
+      ],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "class_name": {"$ref": "#/$defs/nullableString"},
+        "protocols": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "hypothesis": {"type": "boolean"},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-evidence:"},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "propagation_step_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-step:"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "value": {
+      "type": "object",
+      "required": [
+        "id", "kind", "architecture", "function_id", "method_id", "entity_id",
+        "callsite_id", "name", "index", "source_path", "source_address",
+        "declared_encoding", "declared_type", "classification", "type_candidates",
+        "confidence", "evidence_ids", "propagation_step_ids", "provenance",
+        "failure_reasons"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^type-value:"},
+        "kind": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1},
+        "function_id": {"$ref": "#/$defs/nullableString"},
+        "method_id": {"$ref": "#/$defs/nullableString"},
+        "entity_id": {"$ref": "#/$defs/nullableString"},
+        "callsite_id": {"$ref": "#/$defs/nullableString"},
+        "name": {"$ref": "#/$defs/nullableString"},
+        "index": {"type": ["integer", "null"], "minimum": 0},
+        "source_path": {"$ref": "#/$defs/nullableString"},
+        "source_address": {"$ref": "#/$defs/nullableString"},
+        "declared_encoding": {"$ref": "#/$defs/nullableString"},
+        "declared_type": {"$ref": "#/$defs/nullableString"},
+        "owner_class": {"type": "string", "minLength": 1},
+        "ivar_offset": {"type": ["integer", "null"], "minimum": 0},
+        "property_attributes": {"type": "string"},
+        "ivar_value_id": {"type": "string", "pattern": "^type-value:"},
+        "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+        "type_candidates": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/typeCandidate"}
+        },
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-evidence:"},
+          "uniqueItems": true
+        },
+        "propagation_step_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-step:"},
+          "uniqueItems": true
+        },
+        "provenance": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "failure_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "id", "kind", "source", "source_address", "confidence",
+        "provenance", "basis", "details"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^type-evidence:"},
+        "kind": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "source_address": {"$ref": "#/$defs/nullableString"},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "provenance": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "basis": {"type": "string", "minLength": 1},
+        "details": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "required": [
+        "id", "source_value_id", "target_value_id", "kind", "confidence",
+        "hypothesis", "basis", "source_path", "source_address"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^type-step:"},
+        "source_value_id": {"type": "string", "pattern": "^type-value:"},
+        "target_value_id": {"type": "string", "pattern": "^type-value:"},
+        "kind": {"type": "string", "minLength": 1},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "hypothesis": {"type": "boolean"},
+        "basis": {"type": "string", "minLength": 1},
+        "source_path": {"$ref": "#/$defs/nullableString"},
+        "source_address": {"$ref": "#/$defs/nullableString"}
+      },
+      "additionalProperties": false
+    },
+    "refinement": {
+      "type": "object",
+      "required": [
+        "callsite_id", "call_site", "caller_function_id", "receiver_value_id",
+        "baseline_receiver_status", "baseline_receiver_kind",
+        "baseline_class_candidates", "receiver_kind", "classification",
+        "class_candidates", "confidence", "evidence_ids",
+        "propagation_step_ids", "failure_reasons", "changed"
+      ],
+      "properties": {
+        "callsite_id": {"type": "string", "pattern": "^objc-dispatch-callsite:"},
+        "call_site": {"type": "string", "pattern": "^0x[0-9a-f]{8,}$"},
+        "caller_function_id": {"type": "string", "minLength": 1},
+        "receiver_value_id": {"type": "string", "pattern": "^type-value:"},
+        "baseline_receiver_status": {"enum": ["resolved", "candidate_set", "unresolved", null]},
+        "baseline_receiver_kind": {
+          "enum": ["class_object", "self", "super", "typed_instance", "unknown", null]
+        },
+        "baseline_class_candidates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "receiver_kind": {"enum": ["class_object", "typed_instance", "unknown"]},
+        "classification": {"enum": ["exact", "candidate_set"]},
+        "class_candidates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-evidence:"},
+          "uniqueItems": true
+        },
+        "propagation_step_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-step:"},
+          "uniqueItems": true
+        },
+        "failure_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "changed": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "objc-type-flow"},
+        "facts": {
+          "type": "object",
+          "required": [
+            "input_artifacts", "pseudocode_artifact_count", "pseudocode_artifacts",
+            "value_count", "classification_counts", "value_kind_counts",
+            "evidence_count", "propagation_step_count", "fixed_point",
+            "dispatch_receiver_value_count", "dispatch_refinement_count",
+            "changed_dispatch_refinement_count", "unresolved_reason_counts",
+            "values", "evidence", "propagation_steps", "dispatch_refinements"
+          ],
+          "properties": {
+            "input_artifacts": {
+              "type": "object",
+              "required": [
+                "callgraph", "functions", "recovered-code-index", "strings",
+                "objc-dispatch-baseline"
+              ],
+              "properties": {
+                "callgraph": {"$ref": "#/$defs/artifact"},
+                "functions": {"$ref": "#/$defs/artifact"},
+                "recovered-code-index": {"$ref": "#/$defs/artifact"},
+                "strings": {"$ref": "#/$defs/artifact"},
+                "objc-dispatch-baseline": {"$ref": "#/$defs/baselineArtifact"}
+              },
+              "additionalProperties": false
+            },
+            "pseudocode_artifact_count": {"type": "integer", "minimum": 0},
+            "pseudocode_artifacts": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/artifact"}
+            },
+            "value_count": {"type": "integer", "minimum": 0},
+            "classification_counts": {
+              "type": "object",
+              "required": ["exact", "candidate_set", "unresolved"],
+              "properties": {
+                "exact": {"type": "integer", "minimum": 0},
+                "candidate_set": {"type": "integer", "minimum": 0},
+                "unresolved": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "value_kind_counts": {
+              "type": "object",
+              "additionalProperties": {"type": "integer", "minimum": 0}
+            },
+            "evidence_count": {"type": "integer", "minimum": 0},
+            "propagation_step_count": {"type": "integer", "minimum": 0},
+            "fixed_point": {
+              "type": "object",
+              "required": [
+                "converged", "iteration_count", "cyclic_component_count",
+                "cyclic_value_count", "cyclic_components"
+              ],
+              "properties": {
+                "converged": {"const": true},
+                "iteration_count": {"type": "integer", "minimum": 1},
+                "cyclic_component_count": {"type": "integer", "minimum": 0},
+                "cyclic_value_count": {"type": "integer", "minimum": 0},
+                "cyclic_components": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {"type": "string", "pattern": "^type-value:"},
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "dispatch_receiver_value_count": {"type": "integer", "minimum": 0},
+            "dispatch_refinement_count": {"type": "integer", "minimum": 0},
+            "changed_dispatch_refinement_count": {"type": "integer", "minimum": 0},
+            "unresolved_reason_counts": {
+              "type": "object",
+              "additionalProperties": {"type": "integer", "minimum": 0}
+            },
+            "values": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/value"}
+            },
+            "evidence": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/evidence"}
+            },
+            "propagation_steps": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/step"}
+            },
+            "dispatch_refinements": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/refinement"}
+            }
+          },
+          "additionalProperties": false
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind", "propagation_step_id", "source_value_id",
+              "target_value_id", "basis"
+            ],
+            "properties": {
+              "kind": {"const": "type_flow_propagation_hypothesis"},
+              "propagation_step_id": {"type": "string", "pattern": "^type-step:"},
+              "source_value_id": {"type": "string", "pattern": "^type-value:"},
+              "target_value_id": {"type": "string", "pattern": "^type-value:"},
+              "basis": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "count", "message"],
+            "properties": {
+              "code": {"type": "string", "minLength": 1},
+              "count": {"type": "integer", "minimum": 1},
+              "message": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

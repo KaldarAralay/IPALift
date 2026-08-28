@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/report-envelope.schema.json",
+  "title": "IPALift report envelope",
+  "type": "object",
+  "required": ["schema_version", "artifact", "facts", "hypotheses", "errors"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"type": "string"},
+    "facts": {"type": "object"},
+    "hypotheses": {"type": "array", "items": {"type": "object"}},
+    "errors": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": false
+}
+

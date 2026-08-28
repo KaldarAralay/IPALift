@@ -1,0 +1,39 @@
+#include "{{APP_NAMESPACE}}/Adapter.hpp"
+
+#include "reconstruction_core/FixtureService.hpp"
+#include "reconstruction_core/XmlModelRegistry.hpp"
+
+namespace {{APP_NAMESPACE}} {
+
+StartupDescriptor loadStartupDescriptor(const std::filesystem::path& fixture,
+                                         reconstruction_core::EventJournal& events) {
+  events.publish(reconstruction_core::ResourceLoading{resources::startupFixture,
+                                                       fixture.string()});
+  const reconstruction_core::FixturePayload payload =
+      reconstruction_core::FileFixtureService(fixture).load();
+  if (!payload.ok()) {
+    events.publish(reconstruction_core::ResourceLoadFailed{resources::startupFixture,
+                                                           payload.error});
+    return {{}, {}, {}, payload.error};
+  }
+  reconstruction_core::XmlModelRegistry registry;
+  registry.registerModel(
+      {"startup", "StartupDescriptor", "APP-EVIDENCE-ID",
+       {{"initialRoute", "initialRoute", "manual descriptor", "APP-EVIDENCE-ID"},
+        {"nextRoute", "nextRoute", "manual descriptor", "APP-EVIDENCE-ID"},
+        {"title", "title", "manual descriptor", "APP-EVIDENCE-ID"}}});
+  const reconstruction_core::XmlModelParseResult parsed = registry.parse(payload.body);
+  if (!parsed.ok() || parsed.models.size() != 1) {
+    const std::string error = parsed.ok() ? "fixture must contain one startup model" : parsed.error;
+    events.publish(reconstruction_core::ResourceLoadFailed{resources::startupFixture, error});
+    return {{}, {}, {}, error};
+  }
+  const auto& values = parsed.models[0].properties;
+  StartupDescriptor result{values.at("initialRoute"), values.at("nextRoute"),
+                           values.at("title"), {}};
+  events.publish(reconstruction_core::ResourceLoadSucceeded{resources::startupFixture, 1,
+                                                            payload.source});
+  return result;
+}
+
+}  // namespace {{APP_NAMESPACE}}

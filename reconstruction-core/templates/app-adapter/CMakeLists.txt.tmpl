@@ -1,0 +1,67 @@
+cmake_minimum_required(VERSION 3.24)
+
+project({{APP_NAME}}Reconstruction VERSION 0.1.0 LANGUAGES C CXX)
+
+include(CTest)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+set(RECONSTRUCTION_CORE_ROOT "" CACHE PATH "Shared app-neutral reconstruction_core package")
+if(NOT RECONSTRUCTION_CORE_ROOT)
+  message(FATAL_ERROR
+    "Set RECONSTRUCTION_CORE_ROOT to the IPALift reconstruction-core directory")
+endif()
+set(RECONSTRUCTION_CORE_BUILD_TESTS ON CACHE BOOL "" FORCE)
+add_subdirectory("${RECONSTRUCTION_CORE_ROOT}"
+                 "${CMAKE_CURRENT_BINARY_DIR}/reconstruction-core")
+
+add_library({{APP_SLUG}}_adapter src/Adapter.cpp)
+target_include_directories({{APP_SLUG}}_adapter PUBLIC include)
+target_link_libraries({{APP_SLUG}}_adapter PUBLIC reconstruction_core::reconstruction_core)
+reconstruction_enable_warnings({{APP_SLUG}}_adapter)
+
+add_executable({{APP_NAME}}Pilot src/main.cpp)
+target_link_libraries({{APP_NAME}}Pilot PRIVATE {{APP_SLUG}}_adapter)
+target_compile_definitions({{APP_NAME}}Pilot PRIVATE SDL_MAIN_HANDLED)
+reconstruction_enable_warnings({{APP_NAME}}Pilot)
+reconstruction_stage_directory(
+  TARGET {{APP_NAME}}Pilot
+  SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/mock"
+  DESTINATION "$<TARGET_FILE_DIR:{{APP_NAME}}Pilot>/mock"
+)
+
+# Set these app-owned values when the selected slice uses recovered images.
+set({{APP_NAME}}_ASSET_ROOT "" CACHE PATH "Frozen evidence asset root")
+set({{APP_NAME}}_ASSETS "" CACHE STRING "Semicolon-separated recovered asset names")
+set({{APP_NAME}}_ASSET_PROVENANCE "" CACHE STRING "Per-app evidence artifact path")
+if({{APP_NAME}}_ASSET_ROOT AND {{APP_NAME}}_ASSETS AND {{APP_NAME}}_ASSET_PROVENANCE)
+  reconstruction_stage_assets(
+    TARGET {{APP_NAME}}Pilot
+    SOURCE_ROOT "${{{APP_NAME}}_ASSET_ROOT}"
+    PROVENANCE "${{{APP_NAME}}_ASSET_PROVENANCE}"
+    FILES ${{{APP_NAME}}_ASSETS}
+  )
+endif()
+
+if(BUILD_TESTING)
+  add_executable({{APP_NAME}}AdapterTests tests/AdapterTests.cpp)
+  target_link_libraries({{APP_NAME}}AdapterTests PRIVATE {{APP_SLUG}}_adapter)
+  reconstruction_enable_warnings({{APP_NAME}}AdapterTests)
+  add_test(
+    NAME {{APP_SLUG}}_adapter_contracts
+    COMMAND {{APP_NAME}}AdapterTests
+            "${CMAKE_CURRENT_SOURCE_DIR}/mock/startup.xml"
+            "${CMAKE_CURRENT_BINARY_DIR}/test-state/{{APP_SLUG}}.state"
+  )
+  add_test(
+    NAME {{APP_SLUG}}_launch_smoke
+    COMMAND {{APP_NAME}}Pilot
+            --smoke-test
+            --fixture "$<TARGET_FILE_DIR:{{APP_NAME}}Pilot>/mock/startup.xml"
+            --state "${CMAKE_CURRENT_BINARY_DIR}/smoke-state/{{APP_SLUG}}.state"
+  )
+  set_tests_properties({{APP_SLUG}}_adapter_contracts {{APP_SLUG}}_launch_smoke
+                       PROPERTIES TIMEOUT 30)
+endif()

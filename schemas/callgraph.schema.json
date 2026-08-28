@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/callgraph.schema.json",
+  "title": "IPALift Ghidra call graph",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "callgraph"},
+        "facts": {
+          "type": "object",
+          "required": [
+            "edge_count", "resolved_function_edge_count", "semantic_resolved_edge_count",
+            "unresolved_edge_count", "objective_c_dispatch_edge_count", "edges"
+          ],
+          "properties": {
+            "edge_count": {"type": "integer", "minimum": 0},
+            "resolved_function_edge_count": {"type": "integer", "minimum": 0},
+            "semantic_resolved_edge_count": {"type": "integer", "minimum": 0},
+            "unresolved_edge_count": {"type": "integer", "minimum": 0},
+            "objective_c_dispatch_edge_count": {"type": "integer", "minimum": 0},
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "caller_id", "call_site", "reference_type", "indirect", "objective_c_dispatch",
+                  "resolved_function_target", "semantic_target_resolved", "unresolved_reason"
+                ],
+                "properties": {
+                  "caller_id": {"type": "string"},
+                  "indirect": {"type": "boolean"},
+                  "objective_c_dispatch": {"type": "boolean"},
+                  "resolved_function_target": {"type": "boolean"},
+                  "semantic_target_resolved": {"type": "boolean"},
+                  "unresolved_reason": {"type": ["string", "null"]}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

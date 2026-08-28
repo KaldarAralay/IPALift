@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/application.schema.json",
+  "title": "IPALift application report",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "application"},
+        "facts": {
+          "type": "object",
+          "required": ["tool", "source", "archive", "bundle", "executable", "plugins"]
+        }
+      }
+    }
+  ]
+}
+

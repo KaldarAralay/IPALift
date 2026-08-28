@@ -1,0 +1,15 @@
+include .gitattributes
+include .gitignore
+include CONTRIBUTING.md
+include LICENSE
+include README.md
+
+recursive-include .github *.yml
+recursive-include docs *.md
+recursive-include schemas *.json
+recursive-include tests *.py
+graft reconstruction-core
+
+prune reconstruction-core/.deps
+prune reconstruction-core/build
+global-exclude __pycache__ *.py[cod] .DS_Store Thumbs.db

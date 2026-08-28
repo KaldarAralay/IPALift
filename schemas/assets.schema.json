@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/assets.schema.json",
+  "title": "IPALift file and asset inventory report",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "assets"},
+        "facts": {
+          "type": "object",
+          "required": ["file_count", "asset_count", "total_uncompressed_bytes", "category_counts", "files", "assets"]
+        }
+      }
+    }
+  ]
+}
+

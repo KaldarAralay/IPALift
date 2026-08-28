@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<catalog>
+  <entry source="synthetic">
+    <name>A &amp; B</name>
+    <value><![CDATA[C < D]]></value>
+    <future>unresolved</future>
+  </entry>
+</catalog>

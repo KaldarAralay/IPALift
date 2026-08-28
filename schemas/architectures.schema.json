@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/architectures.schema.json",
+  "title": "IPALift architectures report",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "architectures"},
+        "facts": {
+          "type": "object",
+          "required": ["container", "architecture_count", "architectures"],
+          "properties": {
+            "architecture_count": {"type": "integer", "minimum": 1},
+            "architectures": {"type": "array", "minItems": 1}
+          }
+        }
+      }
+    }
+  ]
+}
+

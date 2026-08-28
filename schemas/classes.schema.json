@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/classes.schema.json",
+  "title": "IPALift Objective-C classes report",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "classes"},
+        "facts": {
+          "type": "object",
+          "required": ["architecture_count", "architectures", "total_classes", "total_categories", "total_protocols", "total_selectors"]
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/decompilation.schema.json",
+  "title": "IPALift Ghidra decompilation results",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "decompilation"},
+        "facts": {
+          "type": "object",
+          "required": [
+            "eligible_internal_non_thunk_count", "attempted_count", "success_count",
+            "failure_count", "timeout_count", "skipped_count", "success_coverage", "functions"
+          ],
+          "properties": {
+            "eligible_internal_non_thunk_count": {"type": "integer", "minimum": 0},
+            "attempted_count": {"type": "integer", "minimum": 0},
+            "success_count": {"type": "integer", "minimum": 0},
+            "failure_count": {"type": "integer", "minimum": 0},
+            "timeout_count": {"type": "integer", "minimum": 0},
+            "skipped_count": {"type": "integer", "minimum": 0},
+            "success_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+            "functions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["function_id", "address", "status", "output_path"],
+                "properties": {
+                  "function_id": {"type": "string"},
+                  "address": {"type": "string"},
+                  "status": {"enum": ["success", "failure", "timeout", "skipped"]},
+                  "message": {"type": ["string", "null"]},
+                  "output_path": {"type": ["string", "null"]}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

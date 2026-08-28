@@ -1,0 +1,454 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/objc-dispatch.schema.json",
+  "title": "IPALift Objective-C dynamic dispatch analysis",
+  "$defs": {
+    "nullableString": {"type": ["string", "null"]},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["kind", "source", "provenance", "confidence", "basis"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "source": {"$ref": "#/$defs/nullableString"},
+        "provenance": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "basis": {"type": "string", "minLength": 1},
+        "value": {"type": "string"},
+        "class_name": {"type": "string"},
+        "class_names": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "method_kind": {"enum": ["instance", "class"]},
+        "receiver_expression": {"type": "string"},
+        "from_address": {"type": "string"},
+        "to_address": {"type": "string"},
+        "reference_type": {"type": "string"},
+        "sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      },
+      "additionalProperties": false
+    },
+    "selector": {
+      "type": "object",
+      "required": ["status", "value", "candidates", "evidence"],
+      "properties": {
+        "status": {"enum": ["resolved", "candidate_set", "unresolved"]},
+        "value": {"$ref": "#/$defs/nullableString"},
+        "candidates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "receiver": {
+      "type": "object",
+      "required": [
+        "status", "receiver_kind", "class_candidates", "static_type",
+        "dynamic_subclasses_possible", "evidence"
+      ],
+      "properties": {
+        "status": {"enum": ["resolved", "candidate_set", "unresolved"]},
+        "receiver_kind": {
+          "enum": ["class_object", "self", "super", "typed_instance", "unknown"]
+        },
+        "class_candidates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "static_type": {"$ref": "#/$defs/nullableString"},
+        "dynamic_subclasses_possible": {"type": "boolean"},
+        "evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "method_id", "function_id", "mapping_status", "exact_name", "class_name",
+        "category_name", "kind", "selector", "canonical_address",
+        "implementation_pointer", "lookup_path"
+      ],
+      "properties": {
+        "method_id": {"type": "string", "minLength": 1},
+        "function_id": {"$ref": "#/$defs/nullableString"},
+        "mapping_status": {"enum": ["mapped", "unresolved"]},
+        "exact_name": {"$ref": "#/$defs/nullableString"},
+        "class_name": {"$ref": "#/$defs/nullableString"},
+        "category_name": {"$ref": "#/$defs/nullableString"},
+        "kind": {"enum": ["instance", "class"]},
+        "selector": {"$ref": "#/$defs/nullableString"},
+        "canonical_address": {"$ref": "#/$defs/nullableString"},
+        "implementation_pointer": {"$ref": "#/$defs/nullableString"},
+        "lookup_path": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      },
+      "additionalProperties": false
+    },
+    "typeFlowRefinement": {
+      "type": "object",
+      "required": [
+        "callsite_id", "call_site", "caller_function_id", "receiver_value_id",
+        "baseline_receiver_status", "baseline_receiver_kind",
+        "baseline_class_candidates", "receiver_kind", "classification",
+        "class_candidates", "confidence", "evidence_ids",
+        "propagation_step_ids", "failure_reasons", "changed"
+      ],
+      "properties": {
+        "callsite_id": {"type": "string", "pattern": "^objc-dispatch-callsite:"},
+        "call_site": {"type": "string", "pattern": "^0x[0-9a-f]{8,}$"},
+        "caller_function_id": {"type": "string", "minLength": 1},
+        "receiver_value_id": {"type": "string", "pattern": "^type-value:"},
+        "baseline_receiver_status": {"enum": ["resolved", "candidate_set", "unresolved", null]},
+        "baseline_receiver_kind": {
+          "enum": ["class_object", "self", "super", "typed_instance", "unknown", null]
+        },
+        "baseline_class_candidates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "receiver_kind": {"enum": ["class_object", "typed_instance", "unknown"]},
+        "classification": {"enum": ["exact", "candidate_set"]},
+        "class_candidates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-evidence:"},
+          "uniqueItems": true
+        },
+        "propagation_step_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-step:"},
+          "uniqueItems": true
+        },
+        "failure_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "changed": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "refinedReceiver": {
+      "type": "object",
+      "required": [
+        "status", "receiver_kind", "class_candidates", "static_type",
+        "dynamic_subclasses_possible", "confidence", "evidence_ids",
+        "propagation_step_ids", "failure_reasons"
+      ],
+      "properties": {
+        "status": {"enum": ["resolved", "candidate_set"]},
+        "receiver_kind": {"enum": ["class_object", "typed_instance"]},
+        "class_candidates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "static_type": {"$ref": "#/$defs/nullableString"},
+        "dynamic_subclasses_possible": {"type": "boolean"},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-evidence:"},
+          "uniqueItems": true
+        },
+        "propagation_step_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^type-step:"},
+          "uniqueItems": true
+        },
+        "failure_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "callsite": {
+      "type": "object",
+      "required": [
+        "id", "architecture", "caller", "call_site", "direct_runtime_edge",
+        "selector", "receiver", "classification", "possible_targets", "lookup_paths",
+        "confidence", "confidence_basis", "provenance", "failure_reasons",
+        "type_flow_refinement", "refined_receiver", "refined_classification",
+        "refined_possible_targets", "refined_lookup_paths", "refinement_changed"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^objc-dispatch-callsite:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "caller": {
+          "type": "object",
+          "required": [
+            "function_id", "address", "name", "full_name",
+            "objective_c_method_ids", "objective_c_exact_names"
+          ],
+          "properties": {
+            "function_id": {"type": "string", "minLength": 1},
+            "address": {"$ref": "#/$defs/nullableString"},
+            "name": {"$ref": "#/$defs/nullableString"},
+            "full_name": {"$ref": "#/$defs/nullableString"},
+            "objective_c_method_ids": {
+              "type": "array",
+              "items": {"type": "string"},
+              "uniqueItems": true
+            },
+            "objective_c_exact_names": {
+              "type": "array",
+              "items": {"type": "string"},
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "call_site": {"type": "string", "pattern": "^0x[0-9a-f]{8,}$"},
+        "direct_runtime_edge": {
+          "type": "object",
+          "required": [
+            "id", "target_function_id", "target_address", "target_name",
+            "thunk_target_name", "reference_type", "runtime_variant", "super_dispatch"
+          ],
+          "properties": {
+            "id": {"type": "string", "pattern": "^direct-edge:"},
+            "target_function_id": {"$ref": "#/$defs/nullableString"},
+            "target_address": {"$ref": "#/$defs/nullableString"},
+            "target_name": {"$ref": "#/$defs/nullableString"},
+            "thunk_target_name": {"$ref": "#/$defs/nullableString"},
+            "reference_type": {"$ref": "#/$defs/nullableString"},
+            "runtime_variant": {"type": "string", "pattern": "^objc_msg"},
+            "super_dispatch": {"type": "boolean"}
+          },
+          "additionalProperties": false
+        },
+        "selector": {"$ref": "#/$defs/selector"},
+        "receiver": {"$ref": "#/$defs/receiver"},
+        "classification": {"enum": ["resolved", "candidate_set", "unresolved"]},
+        "possible_targets": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/target"}
+        },
+        "lookup_paths": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "confidence_basis": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1
+        },
+        "provenance": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "failure_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "type_flow_refinement": {
+          "anyOf": [{"$ref": "#/$defs/typeFlowRefinement"}, {"type": "null"}]
+        },
+        "refined_receiver": {
+          "anyOf": [{"$ref": "#/$defs/refinedReceiver"}, {"type": "null"}]
+        },
+        "refined_classification": {
+          "enum": ["resolved", "candidate_set", "unresolved", null]
+        },
+        "refined_possible_targets": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/target"}
+        },
+        "refined_lookup_paths": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "refinement_changed": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "inferredEdge": {
+      "type": "object",
+      "required": [
+        "id", "edge_kind", "callsite_id", "direct_runtime_edge_id",
+        "caller_function_id", "call_site", "target_method_id", "target_function_id",
+        "selector", "resolution", "confidence", "provenance", "basis"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^objc-dispatch-edge:"},
+        "edge_kind": {"const": "objective_c_dynamic_dispatch_inference"},
+        "callsite_id": {"type": "string", "pattern": "^objc-dispatch-callsite:"},
+        "direct_runtime_edge_id": {"type": "string", "pattern": "^direct-edge:"},
+        "caller_function_id": {"type": "string", "minLength": 1},
+        "call_site": {"type": "string", "pattern": "^0x[0-9a-f]{8,}$"},
+        "target_method_id": {"type": "string", "minLength": 1},
+        "target_function_id": {"type": "string", "minLength": 1},
+        "selector": {"$ref": "#/$defs/nullableString"},
+        "resolution": {"enum": ["resolved", "candidate_set"]},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "provenance": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "basis": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "objc-dispatch"},
+        "facts": {
+          "type": "object",
+          "required": [
+            "input_artifacts", "pseudocode_artifact_count", "pseudocode_artifacts",
+            "direct_callgraph_preserved", "direct_callgraph_edge_count",
+            "dispatch_callsite_count", "classification_counts", "selector_status_counts",
+            "receiver_status_counts", "runtime_variant_counts", "inferred_edge_count",
+            "resolved_inferred_edge_count", "candidate_inferred_edge_count",
+            "type_flow_refinement_available", "type_flow_refinement_count",
+            "type_flow_changed_count", "refined_classification_counts",
+            "type_flow_failure_reasons",
+            "unresolved_reason_counts", "callsites"
+          ],
+          "properties": {
+            "input_artifacts": {
+              "type": "object",
+              "required": ["callgraph", "functions", "recovered-code-index", "strings"],
+              "additionalProperties": {"$ref": "#/$defs/artifact"}
+            },
+            "pseudocode_artifact_count": {"type": "integer", "minimum": 0},
+            "pseudocode_artifacts": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/artifact"}
+            },
+            "direct_callgraph_preserved": {"const": true},
+            "direct_callgraph_edge_count": {"type": "integer", "minimum": 0},
+            "dispatch_callsite_count": {"type": "integer", "minimum": 0},
+            "classification_counts": {
+              "type": "object",
+              "required": ["resolved", "candidate_set", "unresolved"],
+              "properties": {
+                "resolved": {"type": "integer", "minimum": 0},
+                "candidate_set": {"type": "integer", "minimum": 0},
+                "unresolved": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "selector_status_counts": {
+              "type": "object",
+              "required": ["resolved", "candidate_set", "unresolved"],
+              "properties": {
+                "resolved": {"type": "integer", "minimum": 0},
+                "candidate_set": {"type": "integer", "minimum": 0},
+                "unresolved": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "receiver_status_counts": {
+              "type": "object",
+              "required": ["resolved", "candidate_set", "unresolved"],
+              "properties": {
+                "resolved": {"type": "integer", "minimum": 0},
+                "candidate_set": {"type": "integer", "minimum": 0},
+                "unresolved": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "runtime_variant_counts": {
+              "type": "object",
+              "additionalProperties": {"type": "integer", "minimum": 0}
+            },
+            "inferred_edge_count": {"type": "integer", "minimum": 0},
+            "resolved_inferred_edge_count": {"type": "integer", "minimum": 0},
+            "candidate_inferred_edge_count": {"type": "integer", "minimum": 0},
+            "type_flow_refinement_available": {"type": "boolean"},
+            "type_flow_refinement_count": {"type": "integer", "minimum": 0},
+            "type_flow_changed_count": {"type": "integer", "minimum": 0},
+            "refined_classification_counts": {
+              "type": "object",
+              "required": ["resolved", "candidate_set", "unresolved"],
+              "properties": {
+                "resolved": {"type": "integer", "minimum": 0},
+                "candidate_set": {"type": "integer", "minimum": 0},
+                "unresolved": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "type_flow_failure_reasons": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            },
+            "unresolved_reason_counts": {
+              "type": "object",
+              "additionalProperties": {"type": "integer", "minimum": 0}
+            },
+            "callsites": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/callsite"}
+            }
+          },
+          "additionalProperties": false
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/inferredEdge"}
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "count", "message"],
+            "properties": {
+              "code": {"type": "string", "minLength": 1},
+              "count": {"type": "integer", "minimum": 1},
+              "message": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

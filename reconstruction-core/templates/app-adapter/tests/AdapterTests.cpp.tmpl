@@ -1,0 +1,28 @@
+#include "{{APP_NAMESPACE}}/Adapter.hpp"
+
+#include <filesystem>
+#include <iostream>
+#include <stdexcept>
+
+int main(const int argc, char** argv) {
+  try {
+    if (argc != 3) {
+      throw std::runtime_error("expected fixture and state path");
+    }
+    reconstruction_core::EventJournal events;
+    const {{APP_NAMESPACE}}::StartupDescriptor descriptor =
+        {{APP_NAMESPACE}}::loadStartupDescriptor(argv[1], events);
+    if (!descriptor.ok() || descriptor.initialRoute != "start" || descriptor.nextRoute != "main") {
+      throw std::runtime_error("startup descriptor failed");
+    }
+    reconstruction_core::VersionedStateStore store(argv[2], {{APP_NAMESPACE}}::stateFormat());
+    if (!store.save({{"last_route", descriptor.nextRoute}}).empty() || !store.load().ok()) {
+      throw std::runtime_error("state round trip failed");
+    }
+    std::cout << "ADAPTER_TESTS_OK app={{APP_NAME}} fixture=1 state=v1\n";
+    return 0;
+  } catch (const std::exception& error) {
+    std::cerr << "ADAPTER_TESTS_FAILED " << error.what() << '\n';
+    return 1;
+  }
+}

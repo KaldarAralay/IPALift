@@ -1,0 +1,31 @@
+#pragma once
+
+#include "reconstruction_core/EventNavigation.hpp"
+#include "reconstruction_core/VersionedStateStore.hpp"
+
+#include <filesystem>
+#include <string>
+
+namespace {{APP_NAMESPACE}} {
+
+namespace resources {
+inline constexpr const char* startupFixture = "startup-fixture";
+inline constexpr const char* persistentState = "persistent-state";
+}  // namespace resources
+
+[[nodiscard]] inline reconstruction_core::StateFormat stateFormat() {
+  return {"RECONSTRUCTION_STATE", "{{APP_SLUG}}", 1};
+}
+
+struct StartupDescriptor {
+  std::string initialRoute;
+  std::string nextRoute;
+  std::string title;
+  std::string error;
+  [[nodiscard]] bool ok() const noexcept { return error.empty(); }
+};
+
+[[nodiscard]] StartupDescriptor loadStartupDescriptor(
+    const std::filesystem::path& fixture, reconstruction_core::EventJournal& events);
+
+}  // namespace {{APP_NAMESPACE}}

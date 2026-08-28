@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/platform-api-map.schema.json",
+  "title": "IPALift platform API dependency map",
+  "$defs": {
+    "nullableString": {"type": ["string", "null"]},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "stringSet": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "address": {"type": "string", "pattern": "^0x[0-9a-f]{8,}$"},
+    "addressSet": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/address"},
+      "uniqueItems": true
+    },
+    "inputArtifact": {
+      "type": "object",
+      "required": ["artifact", "path", "sha256"],
+      "properties": {
+        "artifact": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["kind", "source", "source_address", "confidence", "provenance", "basis", "details"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "source_address": {"anyOf": [{"$ref": "#/$defs/address"}, {"type": "null"}]},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "provenance": {"$ref": "#/$defs/stringSet"},
+        "basis": {"type": "string", "minLength": 1},
+        "details": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "dependency": {
+      "type": "object",
+      "required": [
+        "id", "kind", "classification", "architecture", "symbol", "selector",
+        "class_names", "protocol_name", "callback_contract", "frameworks", "categories",
+        "source_addresses", "call_sites", "affected_function_ids", "affected_method_ids",
+        "affected_class_names", "confidence", "provenance", "evidence", "failure_reasons"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^platform-dependency-"},
+        "kind": {"enum": ["imported_function", "external_class_reference", "objective_c_message", "superclass_override", "protocol_callback"]},
+        "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+        "architecture": {"type": "string", "minLength": 1},
+        "symbol": {"$ref": "#/$defs/nullableString"},
+        "selector": {"$ref": "#/$defs/nullableString"},
+        "class_names": {"$ref": "#/$defs/stringSet"},
+        "protocol_name": {"$ref": "#/$defs/nullableString"},
+        "callback_contract": {"$ref": "#/$defs/nullableString"},
+        "frameworks": {"$ref": "#/$defs/stringSet"},
+        "categories": {"$ref": "#/$defs/stringSet"},
+        "source_addresses": {"$ref": "#/$defs/addressSet"},
+        "call_sites": {"$ref": "#/$defs/addressSet"},
+        "affected_function_ids": {"$ref": "#/$defs/stringSet"},
+        "affected_method_ids": {"$ref": "#/$defs/stringSet"},
+        "affected_class_names": {"$ref": "#/$defs/stringSet"},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "provenance": {"$ref": "#/$defs/stringSet"},
+        "evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence"}
+        },
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "linkage": {
+      "type": "object",
+      "required": ["name", "path", "kind", "load_command_index"],
+      "properties": {
+        "name": {"type": "string"},
+        "path": {"type": "string"},
+        "kind": {"type": "string", "minLength": 1},
+        "load_command_index": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "importedSymbol": {
+      "type": "object",
+      "required": [
+        "id", "architecture", "name", "symbol_kind", "weak_reference", "library_ordinal",
+        "linkage", "catalog_framework", "categories", "external_function_ids",
+        "direct_call_sites", "classification", "failure_reasons"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^platform-import:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "symbol_kind": {"enum": ["function", "unknown", "objective_c_class", "objective_c_metaclass", "objective_c_protocol"]},
+        "weak_reference": {"type": "boolean"},
+        "library_ordinal": {"type": "integer"},
+        "linkage": {"anyOf": [{"$ref": "#/$defs/linkage"}, {"type": "null"}]},
+        "catalog_framework": {"$ref": "#/$defs/nullableString"},
+        "categories": {"$ref": "#/$defs/stringSet"},
+        "external_function_ids": {"$ref": "#/$defs/stringSet"},
+        "direct_call_sites": {"$ref": "#/$defs/addressSet"},
+        "classification": {"enum": ["exact", "unresolved"]},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "linkedLibrary": {
+      "type": "object",
+      "required": ["architectures", "command", "compatibility_version", "current_version", "kind", "name", "path", "timestamp", "catalog_framework", "categories"],
+      "properties": {
+        "architectures": {"$ref": "#/$defs/stringSet"},
+        "command": {"type": "string", "minLength": 1},
+        "compatibility_version": {"$ref": "#/$defs/nullableString"},
+        "current_version": {"$ref": "#/$defs/nullableString"},
+        "kind": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "timestamp": {"type": ["integer", "null"], "minimum": 0},
+        "catalog_framework": {"$ref": "#/$defs/nullableString"},
+        "categories": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "messageCallsite": {
+      "type": "object",
+      "required": [
+        "id", "dispatch_callsite_id", "architecture", "call_site", "caller_function_id",
+        "selector", "selector_status", "receiver_kind", "super_lookup_start", "receiver_class_candidates",
+        "external_class_candidates", "local_target_method_ids", "platform_status",
+        "classification", "frameworks", "categories", "affected_method_ids",
+        "affected_class_names", "confidence", "provenance", "evidence", "failure_reasons"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^platform-message:"},
+        "dispatch_callsite_id": {"type": "string", "pattern": "^objc-dispatch-callsite:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "call_site": {"anyOf": [{"$ref": "#/$defs/address"}, {"type": "null"}]},
+        "caller_function_id": {"type": "string", "minLength": 1},
+        "selector": {"$ref": "#/$defs/nullableString"},
+        "selector_status": {"enum": ["resolved", "candidate_set", "unresolved"]},
+        "receiver_kind": {"type": "string", "minLength": 1},
+        "super_lookup_start": {"$ref": "#/$defs/nullableString"},
+        "receiver_class_candidates": {"$ref": "#/$defs/stringSet"},
+        "external_class_candidates": {"$ref": "#/$defs/stringSet"},
+        "local_target_method_ids": {"$ref": "#/$defs/stringSet"},
+        "platform_status": {"enum": ["external_exact", "external_candidate", "application_local", "unresolved"]},
+        "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+        "frameworks": {"$ref": "#/$defs/stringSet"},
+        "categories": {"$ref": "#/$defs/stringSet"},
+        "affected_method_ids": {"$ref": "#/$defs/stringSet"},
+        "affected_class_names": {"$ref": "#/$defs/stringSet"},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "provenance": {"$ref": "#/$defs/stringSet"},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "indexRecord": {
+      "type": "object",
+      "properties": {
+        "framework": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
+        "function_id": {"type": "string", "minLength": 1},
+        "method_id": {"type": "string", "minLength": 1},
+        "class_name": {"type": "string", "minLength": 1},
+        "address": {"anyOf": [{"$ref": "#/$defs/address"}, {"type": "null"}]},
+        "name": {"$ref": "#/$defs/nullableString"},
+        "exact_name": {"$ref": "#/$defs/nullableString"},
+        "dependency_ids": {"$ref": "#/$defs/stringSet"},
+        "frameworks": {"$ref": "#/$defs/stringSet"},
+        "categories": {"$ref": "#/$defs/stringSet"},
+        "function_ids": {"$ref": "#/$defs/stringSet"},
+        "method_ids": {"$ref": "#/$defs/stringSet"},
+        "class_names": {"$ref": "#/$defs/stringSet"}
+      },
+      "required": ["dependency_ids"],
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "platform-api-map"},
+        "facts": {
+          "type": "object",
+          "required": ["catalog", "input_artifacts", "summary", "category_catalog", "linked_libraries", "imported_symbols", "external_class_references", "message_callsites", "callback_dependencies", "dependencies", "pseudocode_artifacts", "indexes", "evidence_boundary"],
+          "properties": {
+            "catalog": {
+              "type": "object",
+              "required": ["catalog_id", "catalog_version", "sha256", "category_count", "library_record_count", "class_record_count", "protocol_record_count"],
+              "properties": {
+                "catalog_id": {"const": "ipalift-platform-apis"},
+                "catalog_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+                "sha256": {"$ref": "#/$defs/sha256"},
+                "category_count": {"type": "integer", "minimum": 0},
+                "library_record_count": {"type": "integer", "minimum": 0},
+                "class_record_count": {"type": "integer", "minimum": 0},
+                "protocol_record_count": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "input_artifacts": {"type": "array", "items": {"$ref": "#/$defs/inputArtifact"}, "minItems": 8},
+            "summary": {
+              "type": "object",
+              "required": ["linked_library_count", "imported_symbol_count", "external_class_reference_count", "message_callsite_count", "callback_dependency_count", "dependency_count", "classification_counts", "dependency_kind_counts", "message_status_counts", "failure_reason_counts"],
+              "properties": {
+                "linked_library_count": {"type": "integer", "minimum": 0},
+                "imported_symbol_count": {"type": "integer", "minimum": 0},
+                "external_class_reference_count": {"type": "integer", "minimum": 0},
+                "message_callsite_count": {"type": "integer", "minimum": 0},
+                "callback_dependency_count": {"type": "integer", "minimum": 0},
+                "dependency_count": {"type": "integer", "minimum": 0},
+                "classification_counts": {
+                  "type": "object",
+                  "required": ["exact", "candidate_set", "unresolved"],
+                  "properties": {"exact": {"type": "integer", "minimum": 0}, "candidate_set": {"type": "integer", "minimum": 0}, "unresolved": {"type": "integer", "minimum": 0}},
+                  "additionalProperties": false
+                },
+                "dependency_kind_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+                "message_status_counts": {
+                  "type": "object",
+                  "required": ["external_exact", "external_candidate", "application_local", "unresolved"],
+                  "properties": {"external_exact": {"type": "integer", "minimum": 0}, "external_candidate": {"type": "integer", "minimum": 0}, "application_local": {"type": "integer", "minimum": 0}, "unresolved": {"type": "integer", "minimum": 0}},
+                  "additionalProperties": false
+                },
+                "failure_reason_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}}
+              },
+              "additionalProperties": false
+            },
+            "category_catalog": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "title", "description"],
+                "properties": {"id": {"type": "string", "minLength": 1}, "title": {"type": "string", "minLength": 1}, "description": {"type": "string", "minLength": 1}},
+                "additionalProperties": false
+              }
+            },
+            "linked_libraries": {"type": "array", "items": {"$ref": "#/$defs/linkedLibrary"}},
+            "imported_symbols": {"type": "array", "items": {"$ref": "#/$defs/importedSymbol"}},
+            "external_class_references": {"type": "array", "items": {"$ref": "#/$defs/dependency"}},
+            "message_callsites": {"type": "array", "items": {"$ref": "#/$defs/messageCallsite"}},
+            "callback_dependencies": {"type": "array", "items": {"$ref": "#/$defs/dependency"}},
+            "dependencies": {"type": "array", "items": {"$ref": "#/$defs/dependency"}},
+            "pseudocode_artifacts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["function_id", "path", "sha256", "explicit_class_message_count"],
+                "properties": {"function_id": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}, "explicit_class_message_count": {"type": "integer", "minimum": 0}},
+                "additionalProperties": false
+              }
+            },
+            "indexes": {
+              "type": "object",
+              "required": ["frameworks", "categories", "application_functions", "application_methods", "application_classes"],
+              "properties": {
+                "frameworks": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+                "categories": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+                "application_functions": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+                "application_methods": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+                "application_classes": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}}
+              },
+              "additionalProperties": false
+            },
+            "evidence_boundary": {
+              "type": "object",
+              "required": ["gameplay_semantics_inferred", "selectors_or_names_used_as_behavior_evidence", "windows_shims_or_reconstructed_implementations_emitted", "direct_callgraph_preserved", "objc_dispatch_preserved", "objc_type_flow_preserved"],
+              "properties": {
+                "gameplay_semantics_inferred": {"const": false},
+                "selectors_or_names_used_as_behavior_evidence": {"const": false},
+                "windows_shims_or_reconstructed_implementations_emitted": {"const": false},
+                "direct_callgraph_preserved": {"const": true},
+                "objc_dispatch_preserved": {"const": true},
+                "objc_type_flow_preserved": {"const": true}
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "kind", "dependency_id", "confidence", "basis"],
+            "properties": {"id": {"type": "string", "pattern": "^platform-hypothesis:"}, "kind": {"const": "candidate_platform_dependency"}, "dependency_id": {"type": "string", "pattern": "^platform-dependency-"}, "confidence": {"enum": ["medium"]}, "basis": {"type": "string", "minLength": 1}},
+            "additionalProperties": false
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "count", "message"],
+            "properties": {"code": {"type": "string", "minLength": 1}, "count": {"type": "integer", "minimum": 1}, "message": {"type": "string", "minLength": 1}},
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

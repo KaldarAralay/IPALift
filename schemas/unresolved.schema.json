@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/unresolved.schema.json",
+  "title": "IPALift unresolved findings report",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "unresolved"},
+        "facts": {
+          "type": "object",
+          "required": ["item_count", "items"],
+          "properties": {
+            "item_count": {"type": "integer", "minimum": 0},
+            "items": {"type": "array"}
+          }
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,13 @@
+# {{APP_NAME}} reconstruction adapter
+
+This workspace contains only {{APP_NAME}} descriptors, routes, persistence keys, fixtures, evidence
+references, views and tests. Generic implementation comes from IPALift's `reconstruction-core`.
+
+Replace `APP-EVIDENCE-ID`, select the first vertical slice, add recovered assets through the three
+`{{APP_NAME}}_ASSET_*` CMake values, and keep all app facts in this adapter.
+
+Build on Windows by passing the location of IPALift's core:
+
+~~~powershell
+.\scripts\build-and-test.ps1 -CoreRoot C:\path\to\IPALift\reconstruction-core
+~~~

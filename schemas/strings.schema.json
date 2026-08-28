@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/strings.schema.json",
+  "title": "IPALift Ghidra defined strings",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "strings"},
+        "facts": {
+          "type": "object",
+          "required": [
+            "string_count", "selector_string_count", "asset_matched_string_count", "strings"
+          ],
+          "properties": {
+            "string_count": {"type": "integer", "minimum": 0},
+            "selector_string_count": {"type": "integer", "minimum": 0},
+            "asset_matched_string_count": {"type": "integer", "minimum": 0},
+            "strings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "address", "value", "length", "data_type", "references",
+                  "is_selector", "asset_matches"
+                ],
+                "properties": {
+                  "address": {"type": "string"},
+                  "value": {"type": "string"},
+                  "length": {"type": "integer", "minimum": 0},
+                  "references": {"type": "array"},
+                  "is_selector": {"type": "boolean"},
+                  "asset_matches": {"type": "array"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

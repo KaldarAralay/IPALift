@@ -1,0 +1,451 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/native-type-flow.schema.json",
+  "title": "IPALift native type-flow report",
+  "type": "object",
+  "required": ["schema_version", "artifact", "facts", "hypotheses", "errors"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "native-type-flow"},
+    "facts": {
+      "type": "object",
+      "required": ["architecture_records", "input_artifacts", "summary", "values", "unsupported_cpp_classes", "globals", "field_accesses", "fields", "layouts", "virtual_dispatch_refinements", "evidence", "propagation_steps", "fixed_point", "pseudocode_artifacts", "indexes", "evidence_boundary"],
+      "properties": {
+        "architecture_records": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/architecture"}},
+        "input_artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/inputArtifact"}},
+        "summary": {"$ref": "#/$defs/summary"},
+        "values": {"type": "array", "items": {"$ref": "#/$defs/value"}},
+        "unsupported_cpp_classes": {"type": "array", "items": {"$ref": "#/$defs/unsupportedCppClass"}},
+        "globals": {"type": "array", "items": {"$ref": "#/$defs/global"}},
+        "field_accesses": {"type": "array", "items": {"$ref": "#/$defs/fieldAccess"}},
+        "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
+        "layouts": {"type": "array", "items": {"$ref": "#/$defs/layout"}},
+        "virtual_dispatch_refinements": {"type": "array", "items": {"$ref": "#/$defs/refinement"}},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "propagation_steps": {"type": "array", "items": {"$ref": "#/$defs/step"}},
+        "fixed_point": {"$ref": "#/$defs/fixedPoint"},
+        "pseudocode_artifacts": {"type": "array", "items": {"$ref": "#/$defs/pseudocodeArtifact"}},
+        "indexes": {
+          "type": "object",
+          "required": ["functions", "classes", "globals", "layouts", "callsites"],
+          "properties": {
+            "functions": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+            "classes": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+            "globals": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+            "layouts": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+            "callsites": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}}
+          },
+          "additionalProperties": false
+        },
+        "evidence_boundary": {
+          "type": "object",
+          "required": ["behavior_or_semantics_inferred", "field_names_invented", "names_strings_selectors_or_proximity_used_as_class_evidence", "functions_preserved", "direct_callgraph_preserved", "objc_dispatch_preserved", "objc_type_flow_preserved", "platform_api_map_preserved", "cpp_object_model_preserved", "virtual_refinements_additive", "unsupported_cpp_abi_promoted"],
+          "properties": {
+            "behavior_or_semantics_inferred": {"const": false},
+            "field_names_invented": {"const": false},
+            "names_strings_selectors_or_proximity_used_as_class_evidence": {"const": false},
+            "functions_preserved": {"const": true},
+            "direct_callgraph_preserved": {"const": true},
+            "objc_dispatch_preserved": {"const": true},
+            "objc_type_flow_preserved": {"const": true},
+            "platform_api_map_preserved": {"const": true},
+            "cpp_object_model_preserved": {"const": true},
+            "virtual_refinements_additive": {"const": true},
+            "unsupported_cpp_abi_promoted": {"const": false}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["id", "kind", "propagation_step_id", "confidence", "basis"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^native-flow-hypothesis:"},
+              "kind": {"const": "native_type_propagation"},
+              "propagation_step_id": {"type": "string", "pattern": "^native-step:"},
+              "confidence": {"enum": ["high", "medium", "low"]},
+              "basis": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["id", "kind", "refinement_id", "target_function_id", "classification", "confidence", "basis"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^native-virtual-edge:"},
+              "kind": {"const": "native_virtual_dispatch_target"},
+              "refinement_id": {"type": "string", "pattern": "^native-virtual-refinement:"},
+              "target_function_id": {"type": "string", "minLength": 1},
+              "classification": {"enum": ["exact", "candidate_set"]},
+              "confidence": {"enum": ["high", "medium"]},
+              "basis": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "count", "message"],
+        "properties": {
+          "code": {"type": "string", "minLength": 1},
+          "count": {"type": "integer", "minimum": 1},
+          "message": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableString": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+    "nullableInteger": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+    "address": {"anyOf": [{"type": "string", "pattern": "^0x[0-9a-f]+$"}, {"type": "null"}]},
+    "stringArray": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+    "confidence": {"enum": ["high", "medium", "low"]},
+    "counts": {
+      "type": "object",
+      "required": ["exact", "candidate_set", "unresolved"],
+      "properties": {
+        "exact": {"type": "integer", "minimum": 0},
+        "candidate_set": {"type": "integer", "minimum": 0},
+        "unresolved": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "architecture": {
+      "type": "object",
+      "required": ["name", "bits", "pointer_size", "endianness", "cpp_abi", "assumptions"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "bits": {"enum": [32, 64]},
+        "pointer_size": {"enum": [4, 8]},
+        "endianness": {"enum": ["little", "big"]},
+        "cpp_abi": {"type": "string", "minLength": 1},
+        "assumptions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "inputArtifact": {
+      "type": "object",
+      "required": ["artifact", "path", "sha256"],
+      "properties": {
+        "artifact": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "required": ["value_count", "global_count", "field_access_count", "field_count", "layout_count", "virtual_refinement_count", "changed_virtual_refinement_count", "evidence_count", "propagation_step_count", "unsupported_cpp_class_count", "classification_counts", "global_classification_counts", "layout_classification_counts", "field_classification_counts", "virtual_refinement_classification_counts", "failure_reason_counts"],
+      "properties": {
+        "value_count": {"type": "integer", "minimum": 0},
+        "global_count": {"type": "integer", "minimum": 0},
+        "field_access_count": {"type": "integer", "minimum": 0},
+        "field_count": {"type": "integer", "minimum": 0},
+        "layout_count": {"type": "integer", "minimum": 0},
+        "virtual_refinement_count": {"type": "integer", "minimum": 0},
+        "changed_virtual_refinement_count": {"type": "integer", "minimum": 0},
+        "evidence_count": {"type": "integer", "minimum": 0},
+        "propagation_step_count": {"type": "integer", "minimum": 0},
+        "unsupported_cpp_class_count": {"type": "integer", "minimum": 0},
+        "classification_counts": {"$ref": "#/$defs/counts"},
+        "global_classification_counts": {"$ref": "#/$defs/counts"},
+        "layout_classification_counts": {"$ref": "#/$defs/counts"},
+        "field_classification_counts": {"$ref": "#/$defs/counts"},
+        "virtual_refinement_classification_counts": {"$ref": "#/$defs/counts"},
+        "failure_reason_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}}
+      },
+      "additionalProperties": false
+    },
+    "typeCandidate": {
+      "type": "object",
+      "required": ["kind", "name", "cpp_class_id", "objc_class_name", "pointer_depth", "width", "confidence", "hypothesis", "evidence_ids", "propagation_step_ids"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "cpp_class_id": {"$ref": "#/$defs/nullableString"},
+        "objc_class_name": {"$ref": "#/$defs/nullableString"},
+        "pointer_depth": {"type": "integer", "minimum": 0},
+        "width": {"$ref": "#/$defs/nullableInteger"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "hypothesis": {"type": "boolean"},
+        "evidence_ids": {"$ref": "#/$defs/stringArray"},
+        "propagation_step_ids": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "value": {
+      "type": "object",
+      "required": ["id", "kind", "architecture", "function_id", "name", "index", "source_path", "source_address", "declared_type", "original_objc_value_ids", "related_objc_method_ids", "related_objc_class_names", "classification", "confidence", "type_candidates", "evidence_ids", "propagation_step_ids", "cycle_id", "provenance", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-value:"},
+        "kind": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1},
+        "function_id": {"$ref": "#/$defs/nullableString"},
+        "name": {"$ref": "#/$defs/nullableString"},
+        "index": {"$ref": "#/$defs/nullableInteger"},
+        "source_path": {"$ref": "#/$defs/nullableString"},
+        "source_address": {"$ref": "#/$defs/address"},
+        "declared_type": {"$ref": "#/$defs/nullableString"},
+        "original_objc_value_ids": {"$ref": "#/$defs/stringArray"},
+        "related_objc_method_ids": {"$ref": "#/$defs/stringArray"},
+        "related_objc_class_names": {"$ref": "#/$defs/stringArray"},
+        "object_expression": {"type": "string"},
+        "global_address": {"type": "string", "pattern": "^0x[0-9a-f]+$"},
+        "receiver_value_id": {"type": "string"},
+        "field_offset": {"type": "integer"},
+        "cpp_callsite_id": {"type": "string"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "type_candidates": {"type": "array", "items": {"$ref": "#/$defs/typeCandidate"}},
+        "evidence_ids": {"$ref": "#/$defs/stringArray"},
+        "propagation_step_ids": {"$ref": "#/$defs/stringArray"},
+        "cycle_id": {"$ref": "#/$defs/nullableString"},
+        "provenance": {"$ref": "#/$defs/stringArray"},
+        "failure_reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "unsupportedCppClass": {
+      "type": "object",
+      "required": ["class_id", "architecture", "abi", "failure_reason"],
+      "properties": {
+        "class_id": {"type": "string", "pattern": "^cpp-class:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "abi": {"type": "string", "minLength": 1},
+        "failure_reason": {"const": "unsupported_cpp_abi"}
+      },
+      "additionalProperties": false
+    },
+    "globalReference": {
+      "type": "object",
+      "required": ["function_id", "path", "pseudocode_line", "label"],
+      "properties": {
+        "function_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "pseudocode_line": {"type": "integer", "minimum": 1},
+        "label": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "global": {
+      "type": "object",
+      "required": ["id", "architecture", "address", "value_id", "exact_symbols", "references", "classification", "confidence", "type_candidates", "provenance", "evidence_ids", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-global:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "address": {"type": "string", "pattern": "^0x[0-9a-f]+$"},
+        "value_id": {"type": "string", "pattern": "^native-value:"},
+        "exact_symbols": {"$ref": "#/$defs/stringArray"},
+        "references": {"type": "array", "items": {"$ref": "#/$defs/globalReference"}},
+        "classification": {"$ref": "#/$defs/classification"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "type_candidates": {"type": "array", "items": {"$ref": "#/$defs/typeCandidate"}},
+        "provenance": {"$ref": "#/$defs/stringArray"},
+        "evidence_ids": {"$ref": "#/$defs/stringArray"},
+        "failure_reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "inlineEvidence": {
+      "type": "object",
+      "required": ["source", "address", "basis"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "address": {"$ref": "#/$defs/address"},
+        "basis": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "fieldAccess": {
+      "type": "object",
+      "required": ["id", "architecture", "function_id", "receiver_value_id", "field_value_id", "offset", "width", "access_kind", "form", "declared_type", "pseudocode_line", "expression", "source_path", "classification", "confidence", "provenance", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-field-access:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "function_id": {"type": "string", "minLength": 1},
+        "receiver_value_id": {"type": "string", "pattern": "^native-value:"},
+        "field_value_id": {"type": "string", "pattern": "^native-value:"},
+        "offset": {"type": "integer"},
+        "width": {"$ref": "#/$defs/nullableInteger"},
+        "access_kind": {"enum": ["read", "write"]},
+        "form": {"enum": ["pointer_arithmetic", "decompiler_field_array", "decompiler_field_member"]},
+        "declared_type": {"$ref": "#/$defs/nullableString"},
+        "pseudocode_line": {"type": "integer", "minimum": 1},
+        "expression": {"type": "string", "minLength": 1},
+        "source_path": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "provenance": {"$ref": "#/$defs/stringArray"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/inlineEvidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "field": {
+      "type": "object",
+      "required": ["id", "layout_id", "architecture", "offset", "width_candidates", "type_candidates", "field_value_ids", "access_ids", "classification", "confidence", "provenance", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-field:"},
+        "layout_id": {"type": "string", "pattern": "^native-layout:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "offset": {"type": "integer"},
+        "width_candidates": {"type": "array", "items": {"type": "integer", "minimum": 1}, "uniqueItems": true},
+        "type_candidates": {"type": "array", "items": {"$ref": "#/$defs/typeCandidate"}},
+        "field_value_ids": {"$ref": "#/$defs/stringArray"},
+        "access_ids": {"$ref": "#/$defs/stringArray"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "provenance": {"$ref": "#/$defs/stringArray"},
+        "failure_reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "required": ["id", "architecture", "class_ids", "receiver_value_ids", "field_ids", "access_ids", "classification", "confidence", "provenance", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-layout:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "class_ids": {"$ref": "#/$defs/stringArray"},
+        "receiver_value_ids": {"$ref": "#/$defs/stringArray"},
+        "field_ids": {"$ref": "#/$defs/stringArray"},
+        "access_ids": {"$ref": "#/$defs/stringArray"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "provenance": {"$ref": "#/$defs/stringArray"},
+        "failure_reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "refinement": {
+      "type": "object",
+      "required": ["id", "cpp_callsite_id", "architecture", "call_site", "caller_function_id", "receiver_value_id", "slot_index", "original_classification", "original_target_function_ids", "receiver_class_ids", "exact_dynamic_class_ids", "effective_runtime_class_ids", "supporting_slot_ids", "refined_target_function_ids", "classification", "confidence", "changed", "provenance", "evidence_ids", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-virtual-refinement:"},
+        "cpp_callsite_id": {"type": "string", "pattern": "^cpp-indirect-callsite:"},
+        "architecture": {"type": "string", "minLength": 1},
+        "call_site": {"$ref": "#/$defs/address"},
+        "caller_function_id": {"type": "string", "minLength": 1},
+        "receiver_value_id": {"$ref": "#/$defs/nullableString"},
+        "slot_index": {"$ref": "#/$defs/nullableInteger"},
+        "original_classification": {"$ref": "#/$defs/classification"},
+        "original_target_function_ids": {"$ref": "#/$defs/stringArray"},
+        "receiver_class_ids": {"$ref": "#/$defs/stringArray"},
+        "exact_dynamic_class_ids": {"$ref": "#/$defs/stringArray"},
+        "effective_runtime_class_ids": {"$ref": "#/$defs/stringArray"},
+        "supporting_slot_ids": {"$ref": "#/$defs/stringArray"},
+        "refined_target_function_ids": {"$ref": "#/$defs/stringArray"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "changed": {"type": "boolean"},
+        "provenance": {"$ref": "#/$defs/stringArray"},
+        "evidence_ids": {"$ref": "#/$defs/stringArray"},
+        "failure_reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["id", "kind", "source", "source_address", "confidence", "provenance", "basis", "details"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-evidence:"},
+        "kind": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "source_address": {"$ref": "#/$defs/address"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "provenance": {"$ref": "#/$defs/stringArray"},
+        "basis": {"type": "string", "minLength": 1},
+        "details": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "required": ["id", "source_value_id", "target_value_id", "kind", "confidence", "hypothesis", "basis", "source_path", "source_address"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-step:"},
+        "source_value_id": {"type": "string", "pattern": "^native-value:"},
+        "target_value_id": {"type": "string", "pattern": "^native-value:"},
+        "kind": {"type": "string", "minLength": 1},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "hypothesis": {"type": "boolean"},
+        "basis": {"type": "string", "minLength": 1},
+        "source_path": {"$ref": "#/$defs/nullableString"},
+        "source_address": {"$ref": "#/$defs/address"}
+      },
+      "additionalProperties": false
+    },
+    "cycle": {
+      "type": "object",
+      "required": ["id", "value_ids"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^native-cycle:"},
+        "value_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^native-value:"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "fixedPoint": {
+      "type": "object",
+      "required": ["converged", "worklist_pop_count", "successful_relaxation_count", "maximum_evidence_path_length", "cyclic_component_count", "cyclic_components"],
+      "properties": {
+        "converged": {"const": true},
+        "worklist_pop_count": {"type": "integer", "minimum": 0},
+        "successful_relaxation_count": {"type": "integer", "minimum": 0},
+        "maximum_evidence_path_length": {"type": "integer", "minimum": 0},
+        "cyclic_component_count": {"type": "integer", "minimum": 0},
+        "cyclic_components": {"type": "array", "items": {"$ref": "#/$defs/cycle"}}
+      },
+      "additionalProperties": false
+    },
+    "pseudocodeArtifact": {
+      "type": "object",
+      "required": ["function_id", "path", "sha256"],
+      "properties": {
+        "function_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "indexRecord": {
+      "type": "object",
+      "properties": {
+        "function_id": {"type": "string"},
+        "class_id": {"type": "string"},
+        "class_ids": {"$ref": "#/$defs/stringArray"},
+        "address": {"type": "string"},
+        "layout_id": {"type": "string"},
+        "cpp_callsite_id": {"type": "string"},
+        "value_ids": {"$ref": "#/$defs/stringArray"},
+        "method_ids": {"$ref": "#/$defs/stringArray"},
+        "objc_class_names": {"$ref": "#/$defs/stringArray"},
+        "function_ids": {"$ref": "#/$defs/stringArray"},
+        "layout_ids": {"$ref": "#/$defs/stringArray"},
+        "global_ids": {"$ref": "#/$defs/stringArray"},
+        "field_ids": {"$ref": "#/$defs/stringArray"},
+        "access_ids": {"$ref": "#/$defs/stringArray"},
+        "field_access_ids": {"$ref": "#/$defs/stringArray"},
+        "virtual_refinement_ids": {"$ref": "#/$defs/stringArray"},
+        "refinement_ids": {"$ref": "#/$defs/stringArray"},
+        "receiver_value_ids": {"$ref": "#/$defs/stringArray"},
+        "target_function_ids": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    }
+  }
+}

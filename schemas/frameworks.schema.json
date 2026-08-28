@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/frameworks.schema.json",
+  "title": "IPALift frameworks report",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "frameworks"},
+        "facts": {
+          "type": "object",
+          "required": ["linked_library_count", "linked_libraries"]
+        }
+      }
+    }
+  ]
+}
+

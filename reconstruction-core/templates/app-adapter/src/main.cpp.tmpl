@@ -1,0 +1,43 @@
+#include "{{APP_NAMESPACE}}/Adapter.hpp"
+
+#include <filesystem>
+#include <iostream>
+#include <string_view>
+
+int main(const int argc, char** argv) {
+  bool smoke = false;
+  std::filesystem::path fixture{"mock/startup.xml"};
+  std::filesystem::path state{"state/{{APP_SLUG}}.state"};
+  for (int index = 1; index < argc; ++index) {
+    const std::string_view argument = argv[index];
+    if (argument == "--smoke-test") {
+      smoke = true;
+    } else if (argument == "--fixture" && index + 1 < argc) {
+      fixture = argv[++index];
+    } else if (argument == "--state" && index + 1 < argc) {
+      state = argv[++index];
+    } else {
+      std::cerr << "Unknown or incomplete option: " << argument << '\n';
+      return 2;
+    }
+  }
+  reconstruction_core::EventJournal events;
+  const {{APP_NAMESPACE}}::StartupDescriptor descriptor =
+      {{APP_NAMESPACE}}::loadStartupDescriptor(fixture, events);
+  if (!descriptor.ok()) {
+    std::cerr << "ADAPTER_STARTUP_ERROR " << descriptor.error << '\n';
+    return 1;
+  }
+  reconstruction_core::NavigationState navigation(
+      events, {descriptor.initialRoute, descriptor.title});
+  (void)navigation.replace({descriptor.nextRoute, descriptor.title});
+  reconstruction_core::VersionedStateStore store(state, {{APP_NAMESPACE}}::stateFormat());
+  if (!store.save({{"last_route", navigation.current().id}}).empty()) {
+    return 1;
+  }
+  if (smoke) {
+    std::cout << "TEMPLATE_SMOKE_OK app={{APP_NAME}} route=" << navigation.current().id
+              << " events=" << events.events().size() << '\n';
+  }
+  return 0;
+}

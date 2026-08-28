@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/functions.schema.json",
+  "title": "IPALift Ghidra function inventory",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "functions"},
+        "facts": {
+          "type": "object",
+          "required": [
+            "ghidra", "discovered_function_count", "internal_function_count",
+            "external_function_count", "entrypoint_count", "thunk_count",
+            "objective_c_method_record_count", "objective_c_unique_implementation_count",
+            "objective_c_missing_function_count", "macho_import_count",
+            "macho_export_count", "functions"
+          ],
+          "properties": {
+            "ghidra": {"type": "object"},
+            "discovered_function_count": {"type": "integer", "minimum": 0},
+            "internal_function_count": {"type": "integer", "minimum": 0},
+            "external_function_count": {"type": "integer", "minimum": 0},
+            "entrypoint_count": {"type": "integer", "minimum": 0},
+            "thunk_count": {"type": "integer", "minimum": 0},
+            "objective_c_method_record_count": {"type": "integer", "minimum": 0},
+            "objective_c_unique_implementation_count": {"type": "integer", "minimum": 0},
+            "objective_c_missing_function_count": {"type": "integer", "minimum": 0},
+            "macho_import_count": {"type": "integer", "minimum": 0},
+            "macho_export_count": {"type": "integer", "minimum": 0},
+            "functions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id", "address", "name", "full_name", "namespace", "signature",
+                  "external", "thunk", "entrypoint", "basic_blocks", "cross_references",
+                  "objective_c_methods", "macho_imports", "macho_exports", "provenance",
+                  "confidence", "confidence_basis", "callers", "callees",
+                  "referenced_string_addresses", "referenced_selectors",
+                  "referenced_classes", "referenced_assets"
+                ],
+                "properties": {
+                  "id": {"type": "string"},
+                  "address": {"type": ["string", "null"]},
+                  "external": {"type": "boolean"},
+                  "thunk": {"type": "boolean"},
+                  "entrypoint": {"type": "boolean"},
+                  "basic_blocks": {"type": "array"},
+                  "cross_references": {"type": "array"},
+                  "objective_c_methods": {"type": "array"},
+                  "macho_imports": {"type": "array"},
+                  "macho_exports": {"type": "array"},
+                  "provenance": {"type": "array", "items": {"type": "string"}},
+                  "confidence": {"enum": ["low", "medium", "high"]},
+                  "confidence_basis": {"type": "array", "items": {"type": "string"}},
+                  "callers": {"type": "array", "items": {"type": "string"}},
+                  "callees": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

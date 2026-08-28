@@ -1,0 +1,24 @@
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)] [string] $CoreRoot
+)
+
+$ErrorActionPreference = 'Stop'
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$resolvedCore = (Resolve-Path -LiteralPath $CoreRoot).Path
+if (-not (Test-Path -LiteralPath (Join-Path $resolvedCore 'CMakeLists.txt'))) {
+    throw "Core root does not contain CMakeLists.txt: $resolvedCore"
+}
+
+Push-Location $projectRoot
+try {
+    cmake --preset windows-x64 "-DRECONSTRUCTION_CORE_ROOT=$resolvedCore"
+    if ($LASTEXITCODE -ne 0) { throw "CMake configure failed with code $LASTEXITCODE" }
+    cmake --build --preset windows-x64-release
+    if ($LASTEXITCODE -ne 0) { throw "CMake build failed with code $LASTEXITCODE" }
+    ctest --preset windows-x64-release
+    if ($LASTEXITCODE -ne 0) { throw "CTest failed with code $LASTEXITCODE" }
+}
+finally {
+    Pop-Location
+}

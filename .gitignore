@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+build/
+dist/
+*.whl
+
+# Private inputs and generated analysis workspaces
+*.ipa
+analysis-output/
+*-analysis/
+*-run-*/
+*-reconstruction/
+
+# Local third-party tools and reconstruction-core build state
+/tools/
+/reconstruction-core/.deps/
+/reconstruction-core/build/
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/recovered-code-index.schema.json",
+  "title": "IPALift recovered Objective-C code index",
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "recovered-code-index"},
+        "facts": {
+          "type": "object",
+          "required": [
+            "input_artifacts", "function_count", "classification_counts",
+            "objective_c_method_count", "mapped_objective_c_method_count",
+            "unresolved_objective_c_method_count", "method_decompilation_status_counts",
+            "class_count", "category_count", "protocol_count",
+            "protocol_metadata_record_count", "unassociated_native_function_count",
+            "failed_or_timed_out_function_count", "generated_file_count",
+            "generated_files", "functions", "methods", "classes", "categories",
+            "protocols", "unresolved_methods", "unassociated_native_function_ids",
+            "failed_or_timed_out_functions"
+          ],
+          "properties": {
+            "function_count": {"type": "integer", "minimum": 0},
+            "classification_counts": {
+              "type": "object",
+              "required": [
+                "objective_c_method", "native_internal_function", "thunk", "external_function"
+              ],
+              "properties": {
+                "objective_c_method": {"type": "integer", "minimum": 0},
+                "native_internal_function": {"type": "integer", "minimum": 0},
+                "thunk": {"type": "integer", "minimum": 0},
+                "external_function": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "objective_c_method_count": {"type": "integer", "minimum": 0},
+            "mapped_objective_c_method_count": {"type": "integer", "minimum": 0},
+            "unresolved_objective_c_method_count": {"type": "integer", "minimum": 0},
+            "class_count": {"type": "integer", "minimum": 0},
+            "category_count": {"type": "integer", "minimum": 0},
+            "protocol_count": {"type": "integer", "minimum": 0},
+            "protocol_metadata_record_count": {"type": "integer", "minimum": 0},
+            "generated_file_count": {"type": "integer", "minimum": 0},
+            "generated_files": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"type": "string", "pattern": "^recovered/"}
+            },
+            "functions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "function_id", "address", "classification", "name", "full_name",
+                  "namespace", "signature", "external", "thunk", "entrypoint",
+                  "method_ids", "recovered_source_paths", "decompilation", "callers",
+                  "callees", "referenced_string_addresses", "referenced_selectors",
+                  "referenced_classes", "referenced_assets", "macho_imports",
+                  "macho_exports", "provenance", "confidence", "confidence_basis"
+                ],
+                "properties": {
+                  "function_id": {"type": "string"},
+                  "address": {"type": ["string", "null"]},
+                  "classification": {
+                    "enum": [
+                      "objective_c_method", "native_internal_function", "thunk", "external_function"
+                    ]
+                  },
+                  "external": {"type": "boolean"},
+                  "thunk": {"type": "boolean"},
+                  "entrypoint": {"type": "boolean"},
+                  "method_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+                  "recovered_source_paths": {
+                    "type": "array", "uniqueItems": true, "items": {"type": "string"}
+                  },
+                  "decompilation": {"$ref": "#/$defs/decompilation"},
+                  "callers": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+                  "callees": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+                  "provenance": {"type": "array", "items": {"type": "string"}},
+                  "confidence": {"enum": ["low", "medium", "high"]}
+                }
+              }
+            },
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id", "entity_id", "entity_kind", "mapping_status", "mapping_reason",
+                  "source_metadata_present", "architecture", "class_name", "category_name",
+                  "kind", "selector", "exact_name", "canonical_address",
+                  "implementation_pointer", "thumb_entrypoint", "metadata_address",
+                  "type_encoding", "function_id", "decompilation", "callers", "callees",
+                  "referenced_strings", "referenced_selectors", "referenced_classes",
+                  "referenced_assets", "provenance", "confidence", "confidence_basis",
+                  "recovered_header_path", "recovered_source_path"
+                ],
+                "properties": {
+                  "id": {"type": "string"},
+                  "entity_id": {"type": "string"},
+                  "entity_kind": {"enum": ["class", "category"]},
+                  "mapping_status": {"enum": ["mapped", "unresolved"]},
+                  "source_metadata_present": {"type": "boolean"},
+                  "architecture": {"type": "string"},
+                  "class_name": {"type": ["string", "null"]},
+                  "category_name": {"type": ["string", "null"]},
+                  "kind": {"enum": ["instance", "class"]},
+                  "selector": {"type": "string"},
+                  "exact_name": {"type": "string"},
+                  "canonical_address": {"type": "string"},
+                  "implementation_pointer": {"type": "string"},
+                  "thumb_entrypoint": {"type": "boolean"},
+                  "metadata_address": {"type": ["string", "null"]},
+                  "type_encoding": {"type": ["string", "null"]},
+                  "function_id": {"type": ["string", "null"]},
+                  "decompilation": {"$ref": "#/$defs/decompilation"},
+                  "callers": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+                  "callees": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+                  "referenced_strings": {"type": "array"},
+                  "referenced_selectors": {
+                    "type": "array", "uniqueItems": true, "items": {"type": "string"}
+                  },
+                  "referenced_classes": {
+                    "type": "array", "uniqueItems": true, "items": {"type": "string"}
+                  },
+                  "referenced_assets": {"type": "array"},
+                  "provenance": {"type": "array", "items": {"type": "string"}},
+                  "confidence": {"enum": ["low", "medium", "high"]},
+                  "confidence_basis": {"type": "array", "items": {"type": "string"}},
+                  "recovered_header_path": {"type": "string", "pattern": "^recovered/objc/"},
+                  "recovered_source_path": {"type": "string", "pattern": "^recovered/objc/"}
+                }
+              }
+            },
+            "classes": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/entity"}
+            },
+            "categories": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/entity"}
+            },
+            "protocols": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/entity"}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "decompilation": {
+      "type": "object",
+      "required": ["status", "message", "output_path", "sha256"],
+      "properties": {
+        "status": {"enum": ["success", "failure", "timeout", "not_eligible", "unresolved"]},
+        "message": {"type": ["string", "null"]},
+        "output_path": {"type": ["string", "null"]},
+        "sha256": {"type": ["string", "null"]}
+      }
+    },
+    "entity": {
+      "type": "object",
+      "required": [
+        "id", "kind", "architecture", "name", "display_name", "metadata_present",
+        "address", "method_ids", "header_path", "source_path"
+      ],
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"enum": ["class", "category", "protocol"]},
+        "architecture": {"type": "string"},
+        "name": {"type": "string"},
+        "display_name": {"type": "string"},
+        "metadata_present": {"type": "boolean"},
+        "address": {"type": ["string", "null"]},
+        "method_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "header_path": {"type": "string", "pattern": "^recovered/objc/"},
+        "source_path": {"type": "string", "pattern": "^recovered/objc/"}
+      }
+    }
+  }
+}
