@@ -10,11 +10,14 @@ from typing import Any
 from .cpp_model import recover_cpp_model
 from .dispatch import resolve_objc_dispatch
 from .ghidra import decompile_workspace
+from .handoff import build_handoff
+from .interactions import recover_interactions
 from .native_types import infer_native_types
 from .pipeline import analyze_ipa
 from .platform_apis import map_platform_apis
 from .recovery import recover_objc_workspace
 from .typeflow import infer_objc_types
+from .ui_recovery import recover_ui
 
 
 FULL_RUN_STAGES = (
@@ -28,6 +31,9 @@ FULL_RUN_STAGES = (
     "map-platform-apis",
     "recover-cpp-model",
     "infer-native-types",
+    "recover-ui",
+    "recover-interactions",
+    "build-handoff",
 )
 
 StageCallback = Callable[[int, int, str], None]
@@ -77,5 +83,8 @@ def run_full_pipeline(
     execute(7, infer_objc_types, workspace)
     execute(8, map_platform_apis, workspace)
     execute(9, recover_cpp_model, workspace)
-    final = execute(10, infer_native_types, workspace)
+    execute(10, infer_native_types, workspace)
+    execute(11, recover_ui, workspace)
+    execute(12, recover_interactions, workspace)
+    final = execute(13, build_handoff, workspace)
     return FullRunResult(workspace, tuple(completed), final.report_path)

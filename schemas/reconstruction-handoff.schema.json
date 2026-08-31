@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/reconstruction-handoff.schema.json",
+  "title": "IPALift deterministic reconstruction handoff manifest",
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+    "nullableString": {"type": ["string", "null"]},
+    "nullablePositiveInteger": {"type": ["integer", "null"], "minimum": 1},
+    "stringSet": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "countMap": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "classificationCounts": {
+      "type": "object",
+      "required": ["exact", "candidate_set", "unresolved"],
+      "properties": {
+        "exact": {"type": "integer", "minimum": 0},
+        "candidate_set": {"type": "integer", "minimum": 0},
+        "unresolved": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "inputArtifact": {
+      "type": "object",
+      "required": ["artifact", "path", "sha256", "size"],
+      "properties": {
+        "artifact": {"enum": ["application", "assets", "recovered-code-index", "objc-type-flow", "native-type-flow", "platform-api-map", "ui-model", "interaction-model"]},
+        "path": {"type": "string", "pattern": "^analysis/[^/]+\\.json$"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 1, "maximum": 536870912}
+      },
+      "additionalProperties": false
+    },
+    "bounds": {
+      "type": "object",
+      "required": ["max_input_report_bytes", "max_total_input_report_bytes", "max_pseudocode_bytes_per_function", "max_total_pseudocode_bytes", "max_work_items_per_packet", "max_packet_bytes", "max_evidence_links_per_item", "max_candidate_alternatives_per_item", "max_candidate_ids_per_alternative", "max_questions_per_item", "max_reason_codes_per_item", "max_related_ids_per_kind", "max_inline_collection_items", "max_inline_string_chars", "max_inline_depth"],
+      "properties": {
+        "max_input_report_bytes": {"const": 536870912},
+        "max_total_input_report_bytes": {"const": 2147483648},
+        "max_pseudocode_bytes_per_function": {"const": 16777216},
+        "max_total_pseudocode_bytes": {"const": 268435456},
+        "max_work_items_per_packet": {"const": 32},
+        "max_packet_bytes": {"const": 4194304},
+        "max_evidence_links_per_item": {"const": 24},
+        "max_candidate_alternatives_per_item": {"const": 16},
+        "max_candidate_ids_per_alternative": {"const": 64},
+        "max_questions_per_item": {"const": 16},
+        "max_reason_codes_per_item": {"const": 64},
+        "max_related_ids_per_kind": {"const": 128},
+        "max_inline_collection_items": {"const": 64},
+        "max_inline_string_chars": {"const": 4096},
+        "max_inline_depth": {"const": 6}
+      },
+      "additionalProperties": false
+    },
+    "planCounts": {
+      "type": "object",
+      "required": ["packet_ids", "packet_paths", "work_item_count", "classification_counts", "work_item_kind_counts", "candidate_alternative_count", "unresolved_question_count", "implementation_rank_start", "implementation_rank_end"],
+      "properties": {
+        "packet_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"}},
+        "packet_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^handoff/work-packets/[A-Za-z0-9._-]+\\.json$"}},
+        "work_item_count": {"type": "integer", "minimum": 0},
+        "classification_counts": {"$ref": "#/$defs/classificationCounts"},
+        "work_item_kind_counts": {"$ref": "#/$defs/countMap"},
+        "candidate_alternative_count": {"type": "integer", "minimum": 0},
+        "unresolved_question_count": {"type": "integer", "minimum": 0},
+        "implementation_rank_start": {"$ref": "#/$defs/nullablePositiveInteger"},
+        "implementation_rank_end": {"$ref": "#/$defs/nullablePositiveInteger"}
+      }
+    },
+    "screenPlan": {
+      "type": "object",
+      "required": ["screen_id", "screen_name", "classification", "controller_class_name", "packet_ids", "packet_paths", "work_item_count", "classification_counts", "work_item_kind_counts", "candidate_alternative_count", "unresolved_question_count", "implementation_rank_start", "implementation_rank_end"],
+      "properties": {
+        "screen_id": {"type": "string", "minLength": 1},
+        "screen_name": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "controller_class_name": {"$ref": "#/$defs/nullableString"},
+        "packet_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"}},
+        "packet_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^handoff/work-packets/[A-Za-z0-9._-]+\\.json$"}},
+        "work_item_count": {"type": "integer", "minimum": 1},
+        "classification_counts": {"$ref": "#/$defs/classificationCounts"},
+        "work_item_kind_counts": {"$ref": "#/$defs/countMap"},
+        "candidate_alternative_count": {"type": "integer", "minimum": 0},
+        "unresolved_question_count": {"type": "integer", "minimum": 0},
+        "implementation_rank_start": {"type": "integer", "minimum": 1},
+        "implementation_rank_end": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "applicationPlan": {
+      "type": "object",
+      "required": ["scope", "packet_ids", "packet_paths", "work_item_count", "classification_counts", "work_item_kind_counts", "candidate_alternative_count", "unresolved_question_count", "implementation_rank_start", "implementation_rank_end"],
+      "properties": {
+        "scope": {"const": "application"},
+        "packet_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"}},
+        "packet_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^handoff/work-packets/[A-Za-z0-9._-]+\\.json$"}},
+        "work_item_count": {"type": "integer", "minimum": 0},
+        "classification_counts": {"$ref": "#/$defs/classificationCounts"},
+        "work_item_kind_counts": {"$ref": "#/$defs/countMap"},
+        "candidate_alternative_count": {"type": "integer", "minimum": 0},
+        "unresolved_question_count": {"type": "integer", "minimum": 0},
+        "implementation_rank_start": {"$ref": "#/$defs/nullablePositiveInteger"},
+        "implementation_rank_end": {"$ref": "#/$defs/nullablePositiveInteger"}
+      },
+      "additionalProperties": false
+    },
+    "packetReference": {
+      "type": "object",
+      "required": ["id", "scope", "screen_id", "sequence", "total_sequences", "path", "sha256", "size", "work_item_count", "classification_counts", "work_item_kind_counts", "candidate_alternative_count", "unresolved_question_count"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"},
+        "scope": {"enum": ["screen", "application"]},
+        "screen_id": {"$ref": "#/$defs/nullableString"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "total_sequences": {"type": "integer", "minimum": 1},
+        "path": {"type": "string", "pattern": "^handoff/work-packets/[A-Za-z0-9._-]+\\.json$"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 1, "maximum": 4194304},
+        "work_item_count": {"type": "integer", "minimum": 0, "maximum": 32},
+        "classification_counts": {"$ref": "#/$defs/classificationCounts"},
+        "work_item_kind_counts": {"$ref": "#/$defs/countMap"},
+        "candidate_alternative_count": {"type": "integer", "minimum": 0},
+        "unresolved_question_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "implementationRecord": {
+      "type": "object",
+      "required": ["rank", "work_item_id", "packet_id", "packet_path", "screen_id", "kind", "classification", "phase", "basis"],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1},
+        "work_item_id": {"type": "string", "pattern": "^handoff-work-item:[0-9a-f]{20}$"},
+        "packet_id": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"},
+        "packet_path": {"type": "string", "pattern": "^handoff/work-packets/[A-Za-z0-9._-]+\\.json$"},
+        "screen_id": {"$ref": "#/$defs/nullableString"},
+        "kind": {"enum": ["screen", "component", "asset", "navigation", "interaction", "state", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"]},
+        "classification": {"$ref": "#/$defs/classification"},
+        "phase": {"enum": ["exact_foundation", "exact_behavior", "exact_integration", "candidate_validation", "unresolved_research"]},
+        "basis": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "pseudocodeArtifact": {
+      "type": "object",
+      "required": ["function_id", "path", "sha256", "size"],
+      "properties": {
+        "function_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 0, "maximum": 16777216}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "reconstruction-handoff"},
+        "facts": {
+          "type": "object",
+          "required": ["policy", "input_artifacts", "input_fingerprint", "application", "source_inventory", "summary", "screen_plans", "application_plan", "packet_index", "implementation_order", "pseudocode_artifacts", "unresolved_summary", "evidence_boundary"],
+          "properties": {
+            "policy": {
+              "type": "object",
+              "required": ["catalog_id", "catalog_version", "sha256", "bounds", "phase_order", "work_item_kinds"],
+              "properties": {
+                "catalog_id": {"const": "ipalift-reconstruction-handoff-policy"},
+                "catalog_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+                "sha256": {"$ref": "#/$defs/sha256"},
+                "bounds": {"$ref": "#/$defs/bounds"},
+                "phase_order": {
+                  "type": "array",
+                  "prefixItems": [
+                    {"const": "exact_foundation"},
+                    {"const": "exact_behavior"},
+                    {"const": "exact_integration"},
+                    {"const": "candidate_validation"},
+                    {"const": "unresolved_research"}
+                  ],
+                  "items": false
+                },
+                "work_item_kinds": {
+                  "type": "array",
+                  "prefixItems": [
+                    {"const": "screen"}, {"const": "component"}, {"const": "asset"},
+                    {"const": "navigation"}, {"const": "interaction"}, {"const": "state"},
+                    {"const": "persistence"}, {"const": "networking"}, {"const": "platform_dependency"},
+                    {"const": "code_unit"}, {"const": "type_context"}, {"const": "source_issue"}
+                  ],
+                  "items": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "input_artifacts": {"type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true, "items": {"$ref": "#/$defs/inputArtifact"}},
+            "input_fingerprint": {"$ref": "#/$defs/sha256"},
+            "application": {
+              "type": "object",
+              "required": ["bundle_identifier", "display_name", "version", "build_version"],
+              "properties": {
+                "bundle_identifier": {"$ref": "#/$defs/nullableString"},
+                "display_name": {"$ref": "#/$defs/nullableString"},
+                "version": {"$ref": "#/$defs/nullableString"},
+                "build_version": {"$ref": "#/$defs/nullableString"}
+              },
+              "additionalProperties": false
+            },
+            "source_inventory": {
+              "type": "object",
+              "required": ["archive_asset_count", "ui_asset_count", "screen_count", "component_count", "navigation_count", "interaction_count", "effect_count", "recovered_function_count", "recovered_method_count", "recovered_class_count", "objc_type_value_count", "native_type_value_count", "native_global_count", "native_layout_count", "platform_dependency_count", "upstream_hypothesis_count", "upstream_error_count"],
+              "properties": {
+                "archive_asset_count": {"type": "integer", "minimum": 0},
+                "ui_asset_count": {"type": "integer", "minimum": 0},
+                "screen_count": {"type": "integer", "minimum": 0},
+                "component_count": {"type": "integer", "minimum": 0},
+                "navigation_count": {"type": "integer", "minimum": 0},
+                "interaction_count": {"type": "integer", "minimum": 0},
+                "effect_count": {"type": "integer", "minimum": 0},
+                "recovered_function_count": {"type": "integer", "minimum": 0},
+                "recovered_method_count": {"type": "integer", "minimum": 0},
+                "recovered_class_count": {"type": "integer", "minimum": 0},
+                "objc_type_value_count": {"type": "integer", "minimum": 0},
+                "native_type_value_count": {"type": "integer", "minimum": 0},
+                "native_global_count": {"type": "integer", "minimum": 0},
+                "native_layout_count": {"type": "integer", "minimum": 0},
+                "platform_dependency_count": {"type": "integer", "minimum": 0},
+                "upstream_hypothesis_count": {"type": "integer", "minimum": 0},
+                "upstream_error_count": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "summary": {
+              "type": "object",
+              "required": ["screen_plan_count", "application_plan_count", "packet_count", "work_item_count", "pseudocode_artifact_count", "candidate_alternative_count", "unresolved_question_count", "classification_counts", "work_item_kind_counts", "implementation_phase_counts", "failure_reason_counts", "question_kind_counts", "error_count"],
+              "properties": {
+                "screen_plan_count": {"type": "integer", "minimum": 0},
+                "application_plan_count": {"const": 1},
+                "packet_count": {"type": "integer", "minimum": 0},
+                "work_item_count": {"type": "integer", "minimum": 0},
+                "pseudocode_artifact_count": {"type": "integer", "minimum": 0},
+                "candidate_alternative_count": {"type": "integer", "minimum": 0},
+                "unresolved_question_count": {"type": "integer", "minimum": 0},
+                "classification_counts": {"$ref": "#/$defs/classificationCounts"},
+                "work_item_kind_counts": {
+                  "type": "object",
+                  "required": ["screen", "component", "asset", "navigation", "interaction", "state", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"],
+                  "properties": {
+                    "screen": {"type": "integer", "minimum": 0}, "component": {"type": "integer", "minimum": 0},
+                    "asset": {"type": "integer", "minimum": 0}, "navigation": {"type": "integer", "minimum": 0},
+                    "interaction": {"type": "integer", "minimum": 0}, "state": {"type": "integer", "minimum": 0},
+                    "persistence": {"type": "integer", "minimum": 0}, "networking": {"type": "integer", "minimum": 0},
+                    "platform_dependency": {"type": "integer", "minimum": 0}, "code_unit": {"type": "integer", "minimum": 0},
+                    "type_context": {"type": "integer", "minimum": 0}, "source_issue": {"type": "integer", "minimum": 0}
+                  },
+                  "additionalProperties": false
+                },
+                "implementation_phase_counts": {
+                  "type": "object",
+                  "required": ["exact_foundation", "exact_behavior", "exact_integration", "candidate_validation", "unresolved_research"],
+                  "properties": {
+                    "exact_foundation": {"type": "integer", "minimum": 0},
+                    "exact_behavior": {"type": "integer", "minimum": 0},
+                    "exact_integration": {"type": "integer", "minimum": 0},
+                    "candidate_validation": {"type": "integer", "minimum": 0},
+                    "unresolved_research": {"type": "integer", "minimum": 0}
+                  },
+                  "additionalProperties": false
+                },
+                "failure_reason_counts": {"$ref": "#/$defs/countMap"},
+                "question_kind_counts": {"$ref": "#/$defs/countMap"},
+                "error_count": {"const": 0}
+              },
+              "additionalProperties": false
+            },
+            "screen_plans": {"type": "array", "items": {"$ref": "#/$defs/screenPlan"}},
+            "application_plan": {"$ref": "#/$defs/applicationPlan"},
+            "packet_index": {"type": "array", "items": {"$ref": "#/$defs/packetReference"}},
+            "implementation_order": {"type": "array", "items": {"$ref": "#/$defs/implementationRecord"}},
+            "pseudocode_artifacts": {"type": "array", "items": {"$ref": "#/$defs/pseudocodeArtifact"}},
+            "unresolved_summary": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["code", "count"],
+                "properties": {
+                  "code": {"type": "string", "minLength": 1},
+                  "count": {"type": "integer", "minimum": 1}
+                },
+                "additionalProperties": false
+              }
+            },
+            "evidence_boundary": {
+              "type": "object",
+              "required": ["new_behavioral_inference_introduced", "names_used_to_invent_behavior", "candidate_sets_promoted", "unresolved_items_omitted", "packets_bounded", "upstream_artifacts_preserved", "work_items_claim_original_source_recovery", "full_evidence_remains_in_upstream_artifacts"],
+              "properties": {
+                "new_behavioral_inference_introduced": {"const": false},
+                "names_used_to_invent_behavior": {"const": false},
+                "candidate_sets_promoted": {"const": false},
+                "unresolved_items_omitted": {"const": false},
+                "packets_bounded": {"const": true},
+                "upstream_artifacts_preserved": {"const": true},
+                "work_items_claim_original_source_recovery": {"const": false},
+                "full_evidence_remains_in_upstream_artifacts": {"const": true}
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "kind", "work_item_id", "packet_id", "confidence", "basis"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^handoff-hypothesis:[0-9a-f]{20}$"},
+              "kind": {"const": "candidate_handoff_work_item"},
+              "work_item_id": {"type": "string", "pattern": "^handoff-work-item:[0-9a-f]{20}$"},
+              "packet_id": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"},
+              "confidence": {"const": "medium"},
+              "basis": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "errors": {"type": "array", "maxItems": 0}
+      }
+    }
+  ]
+}

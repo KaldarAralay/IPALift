@@ -12,11 +12,14 @@ from .dispatch import resolve_objc_dispatch
 from .errors import IPALiftError
 from .full_run import FULL_RUN_STAGES, run_full_pipeline
 from .ghidra import decompile_workspace
+from .handoff import build_handoff
+from .interactions import recover_interactions
 from .native_types import infer_native_types
 from .pipeline import analyze_ipa
 from .platform_apis import map_platform_apis
 from .recovery import recover_objc_workspace
 from .typeflow import infer_objc_types
+from .ui_recovery import recover_ui
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -102,6 +105,33 @@ def build_parser() -> argparse.ArgumentParser:
         "workspace",
         type=Path,
         help="existing IPALift workspace containing the C++ object-model report",
+    )
+    recover_ui_parser = subcommands.add_parser(
+        "recover-ui",
+        help="recover an evidence-linked UI model from interface archives, code, and resources",
+    )
+    recover_ui_parser.add_argument(
+        "workspace",
+        type=Path,
+        help="completed IPALift workspace containing native type and platform API reports",
+    )
+    recover_interactions_parser = subcommands.add_parser(
+        "recover-interactions",
+        help="connect recovered triggers and bounded call slices to evidence-linked effects",
+    )
+    recover_interactions_parser.add_argument(
+        "workspace",
+        type=Path,
+        help="completed IPALift workspace containing the recovered UI model",
+    )
+    handoff_parser = subcommands.add_parser(
+        "build-handoff",
+        help="build bounded evidence-linked work packets for reconstruction",
+    )
+    handoff_parser.add_argument(
+        "workspace",
+        type=Path,
+        help="completed IPALift workspace containing the interaction model",
     )
     return parser
 
@@ -237,6 +267,55 @@ def main(argv: list[str] | None = None) -> int:
                 f"Virtual refinements: {summary['virtual_refinement_count']}; "
                 f"changed: {summary['changed_virtual_refinement_count']}"
             )
+            print(f"Report: {result.report_path}")
+            return 0
+        if args.command == "recover-ui":
+            result = recover_ui(args.workspace)
+            summary = result.ui_model["facts"]["summary"]
+            counts = summary["classification_counts"]
+            print(f"Recovered user-interface evidence in {result.workspace}")
+            print(
+                f"Screens: {summary['screen_count']}; elements: {summary['element_count']}; "
+                f"navigation edges: {summary['navigation_edge_count']}"
+            )
+            print(
+                f"Exact: {counts['exact']}; candidate sets: {counts['candidate_set']}; "
+                f"unresolved: {counts['unresolved']}"
+            )
+            print(f"UI model: {result.ui_model_path}")
+            print(f"Report: {result.report_path}")
+            return 0
+        if args.command == "recover-interactions":
+            result = recover_interactions(args.workspace)
+            summary = result.interaction_model["facts"]["summary"]
+            counts = summary["classification_counts"]
+            print(f"Recovered interaction evidence in {result.workspace}")
+            print(
+                f"Triggers: {summary['trigger_count']}; interactions: {summary['interaction_count']}; "
+                f"effects: {summary['effect_count']}"
+            )
+            print(
+                f"Exact: {counts['exact']}; candidate sets: {counts['candidate_set']}; "
+                f"unresolved: {counts['unresolved']}"
+            )
+            print(f"Interaction model: {result.interaction_model_path}")
+            print(f"Report: {result.report_path}")
+            return 0
+        if args.command == "build-handoff":
+            result = build_handoff(args.workspace)
+            summary = result.manifest["facts"]["summary"]
+            counts = summary["classification_counts"]
+            print(f"Built reconstruction handoff in {result.workspace}")
+            print(
+                f"Screens: {summary['screen_plan_count']}; packets: {summary['packet_count']}; "
+                f"work items: {summary['work_item_count']}"
+            )
+            print(
+                f"Exact: {counts['exact']}; candidate sets: {counts['candidate_set']}; "
+                f"unresolved: {counts['unresolved']}"
+            )
+            print(f"Manifest: {result.manifest_path}")
+            print(f"Work packets: {result.packets_root}")
             print(f"Report: {result.report_path}")
             return 0
     except IPALiftError as exc:

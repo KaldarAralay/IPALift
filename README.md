@@ -3,8 +3,8 @@
 IPALift turns a legally obtained, decrypted iOS IPA into a deterministic,
 evidence-linked reverse-engineering workspace. It inventories the application,
 analyzes Mach-O and Objective-C metadata, runs Ghidra headlessly, organizes
-pseudocode, and builds conservative Objective-C, platform API, C++, and native
-type models.
+pseudocode, and builds conservative Objective-C, platform API, C++, native
+type, user-interface, and interaction models, then packages them into a reconstruction handoff.
 
 IPALift does not decrypt App Store binaries, recover original source code, or
 infer gameplay from names. Facts, hypotheses, and unresolved evidence stay
@@ -24,6 +24,16 @@ separate so a person or coding agent can see what is known and what is not.
   and platform dependency maps.
 - Conservative Itanium C++ ABI recovery, virtual-call candidates, native type
   flow, globals, and numeric data layouts.
+- App-neutral storyboard, XIB, binary `NIBArchive`, and keyed NIB decoding
+  correlated with UIKit code, assets, localization, outlets, actions,
+  navigation, and constraints.
+- Deterministic trigger-to-handler-to-effect reconstruction for UI actions,
+  lifecycle methods, delegates, notifications, timers, and callbacks, with
+  bounded call slices and explicit state, navigation, persistence, network,
+  notification, timer, and platform effects.
+- Bounded per-screen reconstruction work packets with exact evidence links,
+  candidate alternatives, unresolved questions, verified pseudocode references,
+  and a deterministic evidence-prioritized implementation order.
 - Versioned JSON schemas and human-readable reports for every stage.
 - An optional app-neutral C++ reconstruction core for building separate
   application adapters.
@@ -43,25 +53,32 @@ IPALift never downloads Ghidra and contains no DRM bypass.
 
 ## Install
 
-Clone the repository, then create an isolated environment:
+Create an isolated environment and install the downloaded release wheel:
 
 ~~~powershell
-py -3 -m venv .venv
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install .\ipalift-0.1.0-py3-none-any.whl
+.\.venv\Scripts\ipalift.exe --version
+~~~
+
+For development from a cloned repository, install the editable development
+environment instead:
+
+~~~powershell
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 .\.venv\Scripts\ipalift.exe --version
 ~~~
 
-On macOS or Linux:
-
-~~~bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
-.venv/bin/ipalift --version
-~~~
+On macOS or Linux, use `python3`, `.venv/bin/python`, and
+`.venv/bin/ipalift`. If plain `ipalift` is not recognized, invoke the executable
+inside the virtual environment directly; activation is optional.
 
 Download Ghidra from the
-[official releases page](https://github.com/NationalSecurityAgency/ghidra/releases)
-and either pass --ghidra-home or set GHIDRA_HOME.
+[official releases page](https://github.com/NationalSecurityAgency/ghidra/releases).
+Pass the extracted release directory with `--ghidra-home`, set `GHIDRA_HOME`,
+or place it under `tools/ghidra/ghidra_*_PUBLIC`. See the
+[troubleshooting guide](docs/troubleshooting.md) for exact discovery checks.
 
 ## Quick start
 
@@ -71,13 +88,14 @@ analysis-output directory.
 ### Run the complete pipeline
 
 ~~~powershell
-ipalift run-all path\to\Example.ipa --output analysis-output\example --ghidra-home C:\tools\ghidra_12.1.3_PUBLIC
+.\.venv\Scripts\ipalift.exe run-all path\to\Example.ipa --output analysis-output\example --ghidra-home C:\tools\ghidra_12.1.3_PUBLIC
 ~~~
 
-`run-all` executes all ten stages in dependency order, including the second
-Objective-C dispatch/type-flow refinement pass. It prints each stage as it
-starts and stops on the first error. The individual commands below remain
-available when you want to inspect, resume, or repeat a specific stage.
+`run-all` executes all thirteen stages in dependency order, including the second
+Objective-C dispatch/type-flow refinement pass, UI and interaction recovery, and the final bounded reconstruction handoff. It
+prints each stage as it starts and stops on the first error. The individual
+commands below remain available when you want to inspect, resume, or repeat a
+specific stage.
 
 ### 1. Inspect and extract the IPA
 
@@ -123,11 +141,27 @@ ipalift infer-objc-types analysis-output\example
 ipalift map-platform-apis analysis-output\example
 ipalift recover-cpp-model analysis-output\example
 ipalift infer-native-types analysis-output\example
+ipalift recover-ui analysis-output\example
+ipalift recover-interactions analysis-output\example
+ipalift build-handoff analysis-output\example
 ~~~
 
 The second dispatch/type-flow pass is deterministic and additive: it preserves
 the original direct call graph and baseline classifications while applying only
-fingerprinted feedback.
+fingerprinted feedback. `recover-ui` writes `analysis/ui-model.json` and a
+screen-by-screen `reports/ui-reconstruction-report.md`; it preserves exact
+serialized facts separately from code/resource candidates and unresolved data.
+`recover-interactions` then consumes that UI model without reparsing it and writes
+`analysis/interaction-model.json` plus
+`reports/interaction-reconstruction-report.md`, connecting triggers to bounded
+call-graph slices and evidence-linked effects. `build-handoff` verifies the shared
+input hashes and pseudocode artifacts, then writes
+`analysis/reconstruction-handoff.json`, bounded JSON packets under
+`handoff/work-packets/`, and `reports/reconstruction-handoff-report.md`.
+
+The handoff is the final consolidation layer planned for the current feature set.
+Further work should strengthen evidence quality and real-IPA failure handling
+instead of adding new speculative inference stages.
 
 ## Workspace layout
 
@@ -145,15 +179,19 @@ analysis-output/example/
 |   |-- objc-type-flow.json
 |   |-- platform-api-map.json
 |   |-- cpp-object-model.json
-|   +-- native-type-flow.json
+|   |-- native-type-flow.json
+|   |-- ui-model.json
+|   |-- interaction-model.json
+|   +-- reconstruction-handoff.json
 |-- evidence/extracted/       Preserved archive contents
 |-- decompiled/functions/     Ghidra pseudocode by address
 |-- recovered/                Objective-C and native evidence views
+|-- handoff/work-packets/      Bounded per-screen/application work packets
 +-- reports/                  Human-readable stage summaries
 ~~~
 
 Additional JSON artifacts cover assets, frameworks, strings, decompilation
-status, recovered-code indexing, and unresolved findings. See
+status, recovered-code indexing, UI/interaction reconstruction, handoff planning, and unresolved findings. See
 [schemas](schemas/) for the complete machine-readable contracts.
 
 ## Reading the results
@@ -209,14 +247,21 @@ Run the complete analyzer suite:
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ~~~
 
-Build source and wheel distributions:
+Build the source and wheel distributions, then verify both in clean temporary
+environments:
 
 ~~~powershell
 .\.venv\Scripts\python.exe -m build
+.\.venv\Scripts\python.exe scripts\verify-release.py --dist-dir dist
 ~~~
 
-The tests use synthetic IPA and Mach-O fixtures. No commercial application data
-is required or included.
+Release maintainers can add `--ghidra-home C:\path\to\ghidra_*_PUBLIC` to run
+the full pipeline twice from each artifact, validate every schema, and compare
+all outputs byte-for-byte. See the
+[release checklist](docs/release-checklist.md) for the complete gate.
+
+The tests and release verifier use generated synthetic IPA and Mach-O fixtures.
+No commercial application data is required or included.
 
 ## Repository layout
 
@@ -231,11 +276,13 @@ reconstruction-core/   Optional app-neutral C++ reconstruction helpers
 Generated workspaces, IPA files, Ghidra installations, local dependencies, and
 reconstruction adapters are intentionally ignored by Git.
 
-## Contributing
+## Contributing and security
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a change. Generic
 defects should be demonstrated with synthetic fixtures; proprietary inputs and
-outputs must never be committed.
+outputs must never be committed. Report vulnerabilities privately and follow
+the lawful-use and workspace-handling guidance in [SECURITY.md](SECURITY.md).
+Release history is recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

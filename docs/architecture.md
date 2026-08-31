@@ -68,9 +68,24 @@ The pipeline layers are:
     casts, assignments, and numeric fields to a deterministic fixed point. It
     emits additive receiver-aware virtual refinements and per-function/class/
     global/layout/callsite indexes without rewriting an upstream artifact.
-15. **Plugin seam** accepts read-only `PluginContext` objects. Any future
+15. **UI recovery** safely decodes Interface Builder XML, binary `NIBArchive`,
+    and property-list keyed NIB archives, then correlates their controllers,
+    views, frames, constraints, connections,
+    navigation, assets, and localization with recovered Objective-C and UIKit
+    callsite evidence. Serialized facts remain distinct from candidate
+    programmatic screens and resource associations.
+16. **Interaction recovery** consumes the recovered UI model and authoritative
+    code-analysis reports to connect UI actions, lifecycle methods, delegates,
+    notifications, timers, and callbacks to bounded call-graph slices and
+    evidence-linked state, navigation, persistence, network, notification,
+    timer, UI, and platform effects.
+17. **Reconstruction handoff** verifies shared artifact and pseudocode hashes,
+    converts the existing evidence graph into bounded per-screen/application
+    work packets, and orders exact implementation work before candidate
+    validation and unresolved research without adding behavior.
+18. **Plugin seam** accepts read-only `PluginContext` objects. Any future
     game-, engine-, or format-specific inference belongs in a plugin.
-16. **Reports** separate verified `facts`, inferred `hypotheses`, and `errors`
+19. **Reports** separate verified `facts`, inferred `hypotheses`, and `errors`
     in versioned deterministic JSON envelopes.
 
 Gameplay reconstruction, claims of original-source recovery, and Windows-port
@@ -326,3 +341,105 @@ candidates even if they narrow to a unique target. Refined edges live only in
 the native report envelope's `hypotheses` array. Names, strings, selectors,
 call proximity, validation-target details, and application concepts never
 create type, class, field, behavior, or target evidence.
+
+## UI recovery boundary
+
+`recover-ui` is a deterministic consumer of `application.json`,
+`assets.json`, `functions.json`, `recovered-code-index.json`,
+`objc-dispatch.json`, `objc-type-flow.json`, `platform-api-map.json`, and
+`native-type-flow.json`. It fingerprints those inputs and every extracted
+interface, localization, image, and font artifact it reads. It never changes an
+upstream report or extracted evidence file.
+
+The archive decoder supports Interface Builder XML (`.storyboard`, `.xib`, and
+XML `.nib`), binary UIKit `NIBArchive` tables, property-list `NSKeyedArchiver`
+NIB object graphs, and compiled storyboard manifests. Table counts and offsets,
+VInt32 termination, value types, object/key/class references, archive depth,
+file sizes, UID references, and XML entities are bounded or validated before
+traversal. A malformed or unsupported interface becomes an explicit
+artifact-level error while other interfaces continue to produce results.
+
+Serialized controller/view identity, hierarchy, frames, bounds, constraints,
+outlets, actions, and segues are exact only when they are present in the archive.
+Objective-C implementation/property matches are exact only by recovered class
+and selector/property identity. Programmatic controller instances, UIKit
+callsite-to-screen associations, and function-level asset or localization
+references remain candidate sets unless a direct evidence key proves the join.
+Names and text never create behavior.
+
+The stage emits `analysis/ui-model.json` and
+`reports/ui-reconstruction-report.md`. Both preserve the same evidence boundary:
+the model is suitable for automation, while the screen-by-screen report exposes
+hierarchy, resources, connections, navigation, code operations, and uncertainty
+for a reconstruction agent or human reviewer.
+
+## Interaction recovery boundary
+
+`recover-interactions` is a deterministic consumer of
+`functions.json`, `callgraph.json`, `recovered-code-index.json`,
+`objc-dispatch.json`, `platform-api-map.json`, `native-type-flow.json`, and
+`ui-model.json`. It fingerprints all seven reports and verifies every successful
+pseudocode path, size, and hash named by the recovered-code index. It never
+reparses interface archives or modifies an upstream artifact.
+
+Triggers come only from recovered UI action/segue connections, cataloged
+lifecycle selectors, exact protocol callback contracts, or cataloged
+notification, timer, and callback registration callsites. Literal callback
+selectors, notification names, timer intervals, and effect arguments are exact
+only when platform callsites map one-to-one to matching pseudocode calls.
+Ambiguous block/function-pointer callback targets remain candidate sets.
+
+Each trigger receives a deterministic call slice bounded by cataloged depth,
+function-count, and edge-count limits. Resolved direct semantic call edges stay
+exact. Objective-C dynamic-dispatch edges remain additive candidates, unresolved
+boundaries remain explicit, and truncation is reported rather than hidden.
+
+Effects require explicit upstream evidence: serialized or UIKit navigation, UI
+operations, native field/global or recovered property/ivar reads and writes,
+cataloged persistence/network/notification/timer selectors, or mapped imported
+platform dependencies. Function-level strings and assets remain resource
+candidates and are never promoted to exact call arguments. Selectors and names
+choose generic mechanisms or preserve identities; they never invent application
+behavior.
+
+The stage emits `analysis/interaction-model.json` and the screen-by-screen
+`reports/interaction-reconstruction-report.md`. Every chain states
+trigger to handler to effects with exact, candidate-set, or unresolved
+classification. Static slices do not claim runtime execution, branch coverage,
+or original-source recovery.
+
+## Reconstruction handoff boundary
+
+`build-handoff` is the final deterministic consumer of `application.json`,
+`assets.json`, `recovered-code-index.json`, `objc-type-flow.json`,
+`native-type-flow.json`, `platform-api-map.json`, `ui-model.json`, and
+`interaction-model.json`. It fingerprints all eight reports, rejects stale
+shared-input references, and revalidates every successful pseudocode path, size,
+and hash named by the recovered-code index. It never modifies an upstream
+artifact.
+
+Work items mechanically cover screens, components and layout, resource/asset
+references, navigation, interactions, state, persistence, networking, platform
+dependencies, recovered code units, type context, and upstream source issues.
+Each item carries exact source JSON pointers and artifact hashes. Candidate type,
+handler, dispatch, and resource alternatives remain explicit candidate sets;
+failure reasons become review questions rather than invented answers.
+
+The versioned handoff policy bounds input reports, verified pseudocode, inline
+details, related identifiers, evidence links, alternatives, questions, work-item
+counts, and serialized packet bytes. Screens with more work are split across
+deterministically named packets. Truncated inline details contain their original
+length or digest and retain a link to the complete upstream record. No work item
+is silently omitted.
+
+Implementation ordering is evidence-prioritized and policy-driven: exact
+foundations, exact behavior, exact integrations, candidate validation, then
+unresolved research. This is implementation guidance, not a claim about original
+source structure, runtime execution, product semantics, or the correct choice
+among candidates.
+
+The stage emits `analysis/reconstruction-handoff.json`, strict bounded packet
+files under `handoff/work-packets/`, and
+`reports/reconstruction-handoff-report.md`. This handoff is the final planned
+consolidation layer; further core work should prioritize real-IPA regressions and
+evidence quality instead of additional speculative inference.

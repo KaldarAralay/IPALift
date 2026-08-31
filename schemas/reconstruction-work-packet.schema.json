@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/reconstruction-work-packet.schema.json",
+  "title": "IPALift bounded reconstruction work packet",
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+    "nullableString": {"type": ["string", "null"]},
+    "stringSet": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "countMap": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "classificationCounts": {
+      "type": "object",
+      "required": ["exact", "candidate_set", "unresolved"],
+      "properties": {
+        "exact": {"type": "integer", "minimum": 0},
+        "candidate_set": {"type": "integer", "minimum": 0},
+        "unresolved": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "evidenceLink": {
+      "type": "object",
+      "required": ["kind", "artifact", "path", "json_pointer", "record_id", "classification", "sha256"],
+      "properties": {
+        "kind": {"enum": ["artifact_record", "pseudocode"]},
+        "artifact": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "json_pointer": {"type": ["string", "null"]},
+        "record_id": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "candidateAlternative": {
+      "type": "object",
+      "required": ["id", "kind", "source_record_id", "candidate_ids", "omitted_candidate_count", "basis", "evidence_links"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^handoff-alternative:[0-9a-f]{20}$"},
+        "kind": {"type": "string", "minLength": 1},
+        "source_record_id": {"type": "string", "minLength": 1},
+        "candidate_ids": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "omitted_candidate_count": {"type": "integer", "minimum": 0},
+        "basis": {"type": "string", "minLength": 1},
+        "evidence_links": {"type": "array", "maxItems": 24, "items": {"$ref": "#/$defs/evidenceLink"}}
+      },
+      "additionalProperties": false
+    },
+    "question": {
+      "type": "object",
+      "required": ["id", "kind", "subject_id", "classification", "prompt", "reason_codes", "omitted_reason_count", "evidence_links"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^handoff-question:[0-9a-f]{20}$"},
+        "kind": {"enum": ["validate_candidate_set", "recover_missing_evidence", "review_evidence_limitation"]},
+        "subject_id": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "prompt": {"type": "string", "minLength": 1},
+        "reason_codes": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "omitted_reason_count": {"type": "integer", "minimum": 0},
+        "evidence_links": {"type": "array", "maxItems": 24, "items": {"$ref": "#/$defs/evidenceLink"}}
+      },
+      "additionalProperties": false
+    },
+    "relatedIds": {
+      "type": "object",
+      "required": ["screen_ids", "element_ids", "asset_ids", "navigation_ids", "interaction_ids", "trigger_ids", "effect_ids", "function_ids", "method_ids", "class_names", "type_value_ids", "platform_dependency_ids", "pseudocode_paths"],
+      "properties": {
+        "screen_ids": {"$ref": "#/$defs/stringSet"},
+        "element_ids": {"$ref": "#/$defs/stringSet"},
+        "asset_ids": {"$ref": "#/$defs/stringSet"},
+        "navigation_ids": {"$ref": "#/$defs/stringSet"},
+        "interaction_ids": {"$ref": "#/$defs/stringSet"},
+        "trigger_ids": {"$ref": "#/$defs/stringSet"},
+        "effect_ids": {"$ref": "#/$defs/stringSet"},
+        "function_ids": {"$ref": "#/$defs/stringSet"},
+        "method_ids": {"$ref": "#/$defs/stringSet"},
+        "class_names": {"$ref": "#/$defs/stringSet"},
+        "type_value_ids": {"$ref": "#/$defs/stringSet"},
+        "platform_dependency_ids": {"$ref": "#/$defs/stringSet"},
+        "pseudocode_paths": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "relatedOverflow": {
+      "type": "object",
+      "required": ["screen_ids", "element_ids", "asset_ids", "navigation_ids", "interaction_ids", "trigger_ids", "effect_ids", "function_ids", "method_ids", "class_names", "type_value_ids", "platform_dependency_ids", "pseudocode_paths"],
+      "properties": {
+        "screen_ids": {"type": "integer", "minimum": 0},
+        "element_ids": {"type": "integer", "minimum": 0},
+        "asset_ids": {"type": "integer", "minimum": 0},
+        "navigation_ids": {"type": "integer", "minimum": 0},
+        "interaction_ids": {"type": "integer", "minimum": 0},
+        "trigger_ids": {"type": "integer", "minimum": 0},
+        "effect_ids": {"type": "integer", "minimum": 0},
+        "function_ids": {"type": "integer", "minimum": 0},
+        "method_ids": {"type": "integer", "minimum": 0},
+        "class_names": {"type": "integer", "minimum": 0},
+        "type_value_ids": {"type": "integer", "minimum": 0},
+        "platform_dependency_ids": {"type": "integer", "minimum": 0},
+        "pseudocode_paths": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "workItem": {
+      "type": "object",
+      "required": ["id", "kind", "subject_id", "screen_id", "classification", "title", "implementation_rank", "implementation_phase", "priority_basis", "details", "related_ids", "related_id_overflow_counts", "evidence_links", "omitted_evidence_link_count", "candidate_alternatives", "omitted_candidate_alternative_count", "unresolved_questions", "omitted_question_count", "failure_reasons", "omitted_failure_reason_count"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^handoff-work-item:[0-9a-f]{20}$"},
+        "kind": {"enum": ["screen", "component", "asset", "navigation", "interaction", "state", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"]},
+        "subject_id": {"type": "string", "minLength": 1},
+        "screen_id": {"$ref": "#/$defs/nullableString"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "title": {"type": "string", "minLength": 1},
+        "implementation_rank": {"type": "integer", "minimum": 1},
+        "implementation_phase": {"enum": ["exact_foundation", "exact_behavior", "exact_integration", "candidate_validation", "unresolved_research"]},
+        "priority_basis": {"type": "string", "minLength": 1},
+        "details": {"type": "object"},
+        "related_ids": {"$ref": "#/$defs/relatedIds"},
+        "related_id_overflow_counts": {"$ref": "#/$defs/relatedOverflow"},
+        "evidence_links": {"type": "array", "minItems": 1, "maxItems": 24, "items": {"$ref": "#/$defs/evidenceLink"}},
+        "omitted_evidence_link_count": {"type": "integer", "minimum": 0},
+        "candidate_alternatives": {"type": "array", "maxItems": 16, "items": {"$ref": "#/$defs/candidateAlternative"}},
+        "omitted_candidate_alternative_count": {"type": "integer", "minimum": 0},
+        "unresolved_questions": {"type": "array", "maxItems": 16, "items": {"$ref": "#/$defs/question"}},
+        "omitted_question_count": {"type": "integer", "minimum": 0},
+        "failure_reasons": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "omitted_failure_reason_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": ["schema_version", "artifact", "id", "policy", "input_fingerprint", "scope", "screen_id", "screen_name", "sequence", "total_sequences", "summary", "work_items"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact": {"const": "reconstruction-work-packet"},
+    "id": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"},
+    "policy": {
+      "type": "object",
+      "required": ["catalog_id", "catalog_version", "sha256"],
+      "properties": {
+        "catalog_id": {"const": "ipalift-reconstruction-handoff-policy"},
+        "catalog_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "input_fingerprint": {"$ref": "#/$defs/sha256"},
+    "scope": {"enum": ["screen", "application"]},
+    "screen_id": {"$ref": "#/$defs/nullableString"},
+    "screen_name": {"type": "string", "minLength": 1},
+    "sequence": {"type": "integer", "minimum": 1},
+    "total_sequences": {"type": "integer", "minimum": 1},
+    "summary": {
+      "type": "object",
+      "required": ["work_item_count", "classification_counts", "work_item_kind_counts", "candidate_alternative_count", "unresolved_question_count"],
+      "properties": {
+        "work_item_count": {"type": "integer", "minimum": 0, "maximum": 32},
+        "classification_counts": {"$ref": "#/$defs/classificationCounts"},
+        "work_item_kind_counts": {"$ref": "#/$defs/countMap"},
+        "candidate_alternative_count": {"type": "integer", "minimum": 0},
+        "unresolved_question_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "work_items": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/workItem"}}
+  },
+  "additionalProperties": false
+}

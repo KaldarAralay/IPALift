@@ -1,0 +1,99 @@
+{
+  "catalog_id": "ipalift-interaction-apis",
+  "catalog_version": "1.0.0",
+  "description": "App-neutral trigger and effect mechanisms used for deterministic interaction reconstruction.",
+  "bounds": {
+    "max_call_depth": 4,
+    "max_functions_per_slice": 256,
+    "max_edges_per_slice": 512,
+    "max_pseudocode_bytes_per_function": 16777216,
+    "max_total_pseudocode_bytes": 268435456
+  },
+  "lifecycle_selectors": [
+    {"selector": "loadView", "scope": "view_controller"},
+    {"selector": "viewDidLoad", "scope": "view_controller"},
+    {"selector": "viewWillAppear:", "scope": "view_controller"},
+    {"selector": "viewDidAppear:", "scope": "view_controller"},
+    {"selector": "viewWillDisappear:", "scope": "view_controller"},
+    {"selector": "viewDidDisappear:", "scope": "view_controller"},
+    {"selector": "viewWillLayoutSubviews", "scope": "view_controller"},
+    {"selector": "viewDidLayoutSubviews", "scope": "view_controller"},
+    {"selector": "didReceiveMemoryWarning", "scope": "view_controller"},
+    {"selector": "viewWillTransitionToSize:withTransitionCoordinator:", "scope": "view_controller"},
+    {"selector": "applicationDidFinishLaunching:", "scope": "application"},
+    {"selector": "application:didFinishLaunchingWithOptions:", "scope": "application"},
+    {"selector": "applicationDidBecomeActive:", "scope": "application"},
+    {"selector": "applicationWillResignActive:", "scope": "application"},
+    {"selector": "applicationDidEnterBackground:", "scope": "application"},
+    {"selector": "applicationWillEnterForeground:", "scope": "application"},
+    {"selector": "applicationWillTerminate:", "scope": "application"}
+  ],
+  "notification_registrations": [
+    {"selector": "addObserver:selector:name:object:", "callback_argument_offset": 2, "name_argument_offset": 3},
+    {"selector": "addObserverForName:object:queue:usingBlock:", "callback_argument_offset": null, "name_argument_offset": 1}
+  ],
+  "notification_posts": [
+    {"selector": "postNotification:", "operation": "post"},
+    {"selector": "postNotificationName:object:", "operation": "post"},
+    {"selector": "postNotificationName:object:userInfo:", "operation": "post"}
+  ],
+  "timer_registrations": [
+    {"selector": "scheduledTimerWithTimeInterval:target:selector:userInfo:repeats:", "callback_argument_offset": 3, "interval_argument_offset": 1},
+    {"selector": "timerWithTimeInterval:target:selector:userInfo:repeats:", "callback_argument_offset": 3, "interval_argument_offset": 1},
+    {"selector": "displayLinkWithTarget:selector:", "callback_argument_offset": 2, "interval_argument_offset": null},
+    {"selector": "performSelector:withObject:afterDelay:", "callback_argument_offset": 1, "interval_argument_offset": 3}
+  ],
+  "callback_registrations": [
+    {"selector": "addObserverForName:object:queue:usingBlock:", "contract": "notification_block"},
+    {"selector": "dataTaskWithRequest:completionHandler:", "contract": "network_completion"},
+    {"selector": "dataTaskWithURL:completionHandler:", "contract": "network_completion"},
+    {"selector": "sendAsynchronousRequest:queue:completionHandler:", "contract": "network_completion"},
+    {"selector": "animateWithDuration:animations:", "contract": "animation_block"},
+    {"selector": "animateWithDuration:animations:completion:", "contract": "animation_completion"},
+    {"selector": "performBatchUpdates:completion:", "contract": "ui_batch_completion"}
+  ],
+  "effect_selectors": [
+    {"selector": "pushViewController:animated:", "effect_kind": "navigation", "operation": "push"},
+    {"selector": "popViewControllerAnimated:", "effect_kind": "navigation", "operation": "pop"},
+    {"selector": "presentViewController:animated:completion:", "effect_kind": "navigation", "operation": "present"},
+    {"selector": "dismissViewControllerAnimated:completion:", "effect_kind": "navigation", "operation": "dismiss"},
+    {"selector": "performSegueWithIdentifier:sender:", "effect_kind": "navigation", "operation": "segue"},
+    {"selector": "setViewControllers:", "effect_kind": "navigation", "operation": "replace_stack"},
+    {"selector": "setViewControllers:animated:", "effect_kind": "navigation", "operation": "replace_stack"},
+    {"selector": "setObject:forKey:", "effect_kind": "persistence_write", "operation": "write"},
+    {"selector": "setBool:forKey:", "effect_kind": "persistence_write", "operation": "write"},
+    {"selector": "setInteger:forKey:", "effect_kind": "persistence_write", "operation": "write"},
+    {"selector": "setFloat:forKey:", "effect_kind": "persistence_write", "operation": "write"},
+    {"selector": "setDouble:forKey:", "effect_kind": "persistence_write", "operation": "write"},
+    {"selector": "removeObjectForKey:", "effect_kind": "persistence_write", "operation": "delete"},
+    {"selector": "synchronize", "effect_kind": "persistence_write", "operation": "flush"},
+    {"selector": "objectForKey:", "effect_kind": "persistence_read", "operation": "read"},
+    {"selector": "stringForKey:", "effect_kind": "persistence_read", "operation": "read"},
+    {"selector": "boolForKey:", "effect_kind": "persistence_read", "operation": "read"},
+    {"selector": "integerForKey:", "effect_kind": "persistence_read", "operation": "read"},
+    {"selector": "dataForKey:", "effect_kind": "persistence_read", "operation": "read"},
+    {"selector": "save:", "effect_kind": "persistence_write", "operation": "save"},
+    {"selector": "executeFetchRequest:error:", "effect_kind": "persistence_read", "operation": "fetch"},
+    {"selector": "archiveRootObject:toFile:", "effect_kind": "persistence_write", "operation": "archive"},
+    {"selector": "unarchiveObjectWithFile:", "effect_kind": "persistence_read", "operation": "unarchive"},
+    {"selector": "dataTaskWithRequest:completionHandler:", "effect_kind": "network_request", "operation": "request"},
+    {"selector": "dataTaskWithURL:completionHandler:", "effect_kind": "network_request", "operation": "request"},
+    {"selector": "sendAsynchronousRequest:queue:completionHandler:", "effect_kind": "network_request", "operation": "request"},
+    {"selector": "sendSynchronousRequest:returningResponse:error:", "effect_kind": "network_request", "operation": "request"},
+    {"selector": "start", "effect_kind": "network_request", "operation": "start"},
+    {"selector": "resume", "effect_kind": "network_request", "operation": "resume"},
+    {"selector": "postNotification:", "effect_kind": "notification_post", "operation": "post"},
+    {"selector": "postNotificationName:object:", "effect_kind": "notification_post", "operation": "post"},
+    {"selector": "postNotificationName:object:userInfo:", "effect_kind": "notification_post", "operation": "post"}
+  ],
+  "imported_effects": [
+    {"symbol": "sqlite3_exec", "effect_kind": "persistence_access", "operation": "execute"},
+    {"symbol": "sqlite3_prepare", "effect_kind": "persistence_access", "operation": "prepare"},
+    {"symbol": "sqlite3_prepare_v2", "effect_kind": "persistence_access", "operation": "prepare"},
+    {"symbol": "sqlite3_step", "effect_kind": "persistence_access", "operation": "step"},
+    {"symbol": "sqlite3_open", "effect_kind": "persistence_access", "operation": "open"},
+    {"symbol": "sqlite3_close", "effect_kind": "persistence_access", "operation": "close"},
+    {"symbol": "CFReadStreamOpen", "effect_kind": "network_request", "operation": "open_stream"},
+    {"symbol": "CFWriteStreamOpen", "effect_kind": "network_request", "operation": "open_stream"}
+  ]
+}

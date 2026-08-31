@@ -14,7 +14,7 @@ class FullRunTests(unittest.TestCase):
         requested_output = Path("requested-output")
         workspace = Path("resolved-workspace")
         ghidra_home = Path("ghidra-home")
-        report = workspace / "reports" / "native-type-flow-report.md"
+        report = workspace / "reports" / "reconstruction-handoff-report.md"
         calls: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
         progress: list[tuple[int, int, str]] = []
 
@@ -35,7 +35,10 @@ class FullRunTests(unittest.TestCase):
             patch("ipalift.full_run.infer_objc_types", side_effect=stage("infer-objc-types")),
             patch("ipalift.full_run.map_platform_apis", side_effect=stage("map-platform-apis")),
             patch("ipalift.full_run.recover_cpp_model", side_effect=stage("recover-cpp-model")),
-            patch("ipalift.full_run.infer_native_types", side_effect=stage("infer-native-types", final_result)),
+            patch("ipalift.full_run.infer_native_types", side_effect=stage("infer-native-types")),
+            patch("ipalift.full_run.recover_ui", side_effect=stage("recover-ui")),
+            patch("ipalift.full_run.recover_interactions", side_effect=stage("recover-interactions")),
+            patch("ipalift.full_run.build_handoff", side_effect=stage("build-handoff", final_result)),
         ):
             result = run_full_pipeline(
                 ipa,
@@ -58,6 +61,9 @@ class FullRunTests(unittest.TestCase):
                 "map-platform-apis",
                 "recover-cpp-model",
                 "infer-native-types",
+                "recover-ui",
+                "recover-interactions",
+                "build-handoff",
             ],
             [call[0] for call in calls],
         )

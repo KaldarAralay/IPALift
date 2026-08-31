@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +16,7 @@ from ipalift.ghidra import (
     _method_records,
     build_headless_arguments,
     decompile_workspace,
+    discover_ghidra_home,
     normalize_ghidra_results,
     prepare_ghidra_evidence,
     validate_ghidra_home,
@@ -81,6 +83,37 @@ class GhidraTests(unittest.TestCase):
             launcher.unlink()
             with self.assertRaisesRegex(GhidraError, "Invalid Ghidra home"):
                 validate_ghidra_home(home)
+
+    def test_discovers_explicit_environment_and_conventional_ghidra_homes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+
+            def installation(name: str, version: str) -> Path:
+                home = root / name
+                (home / "support").mkdir(parents=True)
+                (home / "Ghidra").mkdir()
+                (home / "support" / "analyzeHeadless.bat").write_text(
+                    "@echo off\n", encoding="utf-8"
+                )
+                (home / "support" / "analyzeHeadless").write_text(
+                    "#!/bin/sh\n", encoding="utf-8"
+                )
+                (home / "Ghidra" / "application.properties").write_text(
+                    f"application.version={version}\n", encoding="utf-8"
+                )
+                return home
+
+            explicit = installation("explicit", "12.1.1")
+            configured = installation("configured", "12.1.2")
+            conventional = installation("tools/ghidra/ghidra_12.1.3_PUBLIC", "12.1.3")
+
+            with patch.dict(os.environ, {"GHIDRA_HOME": str(configured)}, clear=True):
+                self.assertEqual("12.1.1", discover_ghidra_home(explicit).version)
+                self.assertEqual("12.1.2", discover_ghidra_home().version)
+            with patch.dict(os.environ, {}, clear=True):
+                found = discover_ghidra_home(search_root=root)
+                self.assertEqual("12.1.3", found.version)
+                self.assertEqual(conventional.resolve(), found.home)
 
     def test_arm_thumb_method_pointer_is_preserved_and_canonicalized(self) -> None:
         facts = {

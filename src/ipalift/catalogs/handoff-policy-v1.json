@@ -1,0 +1,57 @@
+{
+  "catalog_id": "ipalift-reconstruction-handoff-policy",
+  "catalog_version": "1.0.0",
+  "description": "App-neutral ordering and resource bounds for reconstruction handoff packets.",
+  "bounds": {
+    "max_input_report_bytes": 536870912,
+    "max_total_input_report_bytes": 2147483648,
+    "max_pseudocode_bytes_per_function": 16777216,
+    "max_total_pseudocode_bytes": 268435456,
+    "max_work_items_per_packet": 32,
+    "max_packet_bytes": 4194304,
+    "max_evidence_links_per_item": 24,
+    "max_candidate_alternatives_per_item": 16,
+    "max_candidate_ids_per_alternative": 64,
+    "max_questions_per_item": 16,
+    "max_reason_codes_per_item": 64,
+    "max_related_ids_per_kind": 128,
+    "max_inline_collection_items": 64,
+    "max_inline_string_chars": 4096,
+    "max_inline_depth": 6
+  },
+  "work_item_kinds": [
+    "screen",
+    "component",
+    "asset",
+    "navigation",
+    "interaction",
+    "state",
+    "persistence",
+    "networking",
+    "platform_dependency",
+    "code_unit",
+    "type_context",
+    "source_issue"
+  ],
+  "exact_phase_by_kind": {
+    "screen": "exact_foundation",
+    "component": "exact_foundation",
+    "asset": "exact_foundation",
+    "code_unit": "exact_foundation",
+    "type_context": "exact_foundation",
+    "navigation": "exact_behavior",
+    "interaction": "exact_behavior",
+    "state": "exact_behavior",
+    "persistence": "exact_integration",
+    "networking": "exact_integration",
+    "platform_dependency": "exact_integration",
+    "source_issue": "unresolved_research"
+  },
+  "phase_order": [
+    "exact_foundation",
+    "exact_behavior",
+    "exact_integration",
+    "candidate_validation",
+    "unresolved_research"
+  ]
+}

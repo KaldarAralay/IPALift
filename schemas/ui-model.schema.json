@@ -1,0 +1,414 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/ui-model.schema.json",
+  "title": "IPALift deterministic UI evidence model",
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+    "confidence": {"enum": ["high", "medium", "low"]},
+    "nullableString": {"type": ["string", "null"]},
+    "stringSet": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "evidence": {
+      "type": "object",
+      "required": ["kind", "source", "source_object", "field", "source_address", "confidence", "basis", "details"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "source_object": {"$ref": "#/$defs/nullableString"},
+        "field": {"$ref": "#/$defs/nullableString"},
+        "source_address": {"$ref": "#/$defs/nullableString"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "basis": {"type": "string", "minLength": 1},
+        "details": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "geometry": {
+      "type": "object",
+      "required": ["x", "y", "width", "height", "raw"],
+      "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "width": {"type": "number"},
+        "height": {"type": "number"},
+        "raw": {}
+      },
+      "additionalProperties": false
+    },
+    "inputArtifact": {
+      "type": "object",
+      "required": ["artifact", "path", "sha256"],
+      "properties": {
+        "artifact": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "pattern": "^analysis/[^/]+\\.json$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "interfaceArtifact": {
+      "type": "object",
+      "required": ["path", "bundle_relative_path", "sha256", "format", "source_kind", "status", "object_count", "connection_count", "constraint_count", "screen_ids", "issue_codes"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bundle_relative_path": {"$ref": "#/$defs/nullableString"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "format": {"type": "string", "minLength": 1},
+        "source_kind": {"type": "string", "minLength": 1},
+        "status": {"enum": ["decoded", "partial", "unresolved"]},
+        "object_count": {"type": "integer", "minimum": 0},
+        "connection_count": {"type": "integer", "minimum": 0},
+        "constraint_count": {"type": "integer", "minimum": 0},
+        "screen_ids": {"$ref": "#/$defs/stringSet"},
+        "issue_codes": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "screen": {
+      "type": "object",
+      "required": ["id", "name", "classification", "source_kind", "source_path", "source_object_id", "controller_object_id", "controller_class_name", "storyboard_identifier", "root_element_id", "element_ids", "connection_ids", "constraint_ids", "navigation_edge_ids", "code_operation_ids", "entry_point_kind", "entry_point_basis", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-screen"},
+        "name": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "source_kind": {"type": "string", "minLength": 1},
+        "source_path": {"type": "string", "minLength": 1},
+        "source_object_id": {"$ref": "#/$defs/nullableString"},
+        "controller_object_id": {"$ref": "#/$defs/nullableString"},
+        "controller_class_name": {"$ref": "#/$defs/nullableString"},
+        "storyboard_identifier": {"$ref": "#/$defs/nullableString"},
+        "root_element_id": {"$ref": "#/$defs/nullableString"},
+        "element_ids": {"$ref": "#/$defs/stringSet"},
+        "connection_ids": {"$ref": "#/$defs/stringSet"},
+        "constraint_ids": {"$ref": "#/$defs/stringSet"},
+        "navigation_edge_ids": {"$ref": "#/$defs/stringSet"},
+        "code_operation_ids": {"$ref": "#/$defs/stringSet"},
+        "entry_point_kind": {"enum": ["none", "main", "launch"]},
+        "entry_point_basis": {"$ref": "#/$defs/stringSet"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "element": {
+      "type": "object",
+      "required": ["id", "screen_id", "source_object_id", "class_name", "base_class_name", "custom_class", "tag", "classification", "parent_id", "child_ids", "frame", "bounds", "attributes", "properties", "resource_reference_ids", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-object:"},
+        "screen_id": {"type": "string", "pattern": "^ui-screen"},
+        "source_object_id": {"type": "string", "minLength": 1},
+        "class_name": {"type": "string", "minLength": 1},
+        "base_class_name": {"$ref": "#/$defs/nullableString"},
+        "custom_class": {"$ref": "#/$defs/nullableString"},
+        "tag": {"$ref": "#/$defs/nullableString"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "parent_id": {"$ref": "#/$defs/nullableString"},
+        "child_ids": {"$ref": "#/$defs/stringSet"},
+        "frame": {"anyOf": [{"$ref": "#/$defs/geometry"}, {"type": "null"}]},
+        "bounds": {"anyOf": [{"$ref": "#/$defs/geometry"}, {"type": "null"}]},
+        "attributes": {"type": "object"},
+        "properties": {"type": "object"},
+        "resource_reference_ids": {"$ref": "#/$defs/stringSet"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "codeMatch": {
+      "type": "object",
+      "required": ["kind", "classification", "candidate_ids", "evidence"],
+      "properties": {
+        "kind": {"enum": ["objective_c_action_method", "objective_c_outlet_storage"]},
+        "classification": {"$ref": "#/$defs/classification"},
+        "candidate_ids": {"$ref": "#/$defs/stringSet"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+      },
+      "additionalProperties": false
+    },
+    "connection": {
+      "type": "object",
+      "required": ["id", "screen_id", "source_object_id", "destination_object_id", "kind", "subkind", "label", "selector", "event", "classification", "code_matches", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-connection:"},
+        "screen_id": {"$ref": "#/$defs/nullableString"},
+        "source_object_id": {"$ref": "#/$defs/nullableString"},
+        "destination_object_id": {"$ref": "#/$defs/nullableString"},
+        "kind": {"enum": ["outlet", "action", "segue"]},
+        "subkind": {"type": "string", "minLength": 1},
+        "label": {"$ref": "#/$defs/nullableString"},
+        "selector": {"$ref": "#/$defs/nullableString"},
+        "event": {"$ref": "#/$defs/nullableString"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "code_matches": {"type": "array", "items": {"$ref": "#/$defs/codeMatch"}},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "constraint": {
+      "type": "object",
+      "required": ["id", "screen_id", "owner_object_id", "first_item_id", "second_item_id", "first_attribute", "second_attribute", "relation", "constant", "multiplier", "priority", "classification", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-constraint:"},
+        "screen_id": {"$ref": "#/$defs/nullableString"},
+        "owner_object_id": {"$ref": "#/$defs/nullableString"},
+        "first_item_id": {"$ref": "#/$defs/nullableString"},
+        "second_item_id": {"$ref": "#/$defs/nullableString"},
+        "first_attribute": {"$ref": "#/$defs/nullableString"},
+        "second_attribute": {"$ref": "#/$defs/nullableString"},
+        "relation": {"type": "string", "minLength": 1},
+        "constant": {},
+        "multiplier": {},
+        "priority": {},
+        "classification": {"$ref": "#/$defs/classification"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "navigation": {
+      "type": "object",
+      "required": ["id", "source_screen_id", "destination_screen_id", "connection_id", "subkind", "identifier", "classification", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-navigation:"},
+        "source_screen_id": {"$ref": "#/$defs/nullableString"},
+        "destination_screen_id": {"$ref": "#/$defs/nullableString"},
+        "connection_id": {"type": "string", "pattern": "^ui-connection:"},
+        "subkind": {"type": "string", "minLength": 1},
+        "identifier": {"$ref": "#/$defs/nullableString"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "localization": {
+      "type": "object",
+      "required": ["id", "source_path", "locale", "table", "key", "value", "evidence"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-localization:"},
+        "source_path": {"type": "string", "minLength": 1},
+        "locale": {"$ref": "#/$defs/nullableString"},
+        "table": {"type": "string", "minLength": 1},
+        "key": {"type": "string"},
+        "value": {},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+      },
+      "additionalProperties": false
+    },
+    "asset": {
+      "type": "object",
+      "required": ["id", "path", "bundle_relative_path", "name", "logical_name", "category", "sha256", "size", "scale", "pixel_size", "logical_size", "evidence"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-asset:"},
+        "path": {"type": "string", "minLength": 1},
+        "bundle_relative_path": {"type": "string"},
+        "name": {"type": "string", "minLength": 1},
+        "logical_name": {"type": "string", "minLength": 1},
+        "category": {"enum": ["image", "texture", "font"]},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 0},
+        "scale": {"type": "integer", "minimum": 1},
+        "pixel_size": {"anyOf": [{"$ref": "#/$defs/size"}, {"type": "null"}]},
+        "logical_size": {"anyOf": [{"$ref": "#/$defs/size"}, {"type": "null"}]},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+      },
+      "additionalProperties": false
+    },
+    "size": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {"width": {"type": "number", "minimum": 0}, "height": {"type": "number", "minimum": 0}},
+      "additionalProperties": false
+    },
+    "resourceReference": {
+      "type": "object",
+      "required": ["id", "screen_id", "element_id", "kind", "field", "requested_value", "classification", "asset_candidate_ids", "localization_entry_ids", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-resource-reference:"},
+        "screen_id": {"type": "string", "pattern": "^ui-screen"},
+        "element_id": {"type": "string", "pattern": "^ui-object:"},
+        "kind": {"enum": ["image", "text", "font", "color"]},
+        "field": {"type": "string", "minLength": 1},
+        "requested_value": {"type": "string"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "asset_candidate_ids": {"$ref": "#/$defs/stringSet"},
+        "localization_entry_ids": {"$ref": "#/$defs/stringSet"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "operationResource": {
+      "type": "object",
+      "required": ["kind", "value", "candidate_ids", "classification", "failure_reason"],
+      "properties": {
+        "kind": {"enum": ["asset", "string"]},
+        "value": {"type": "string"},
+        "candidate_ids": {"$ref": "#/$defs/stringSet"},
+        "classification": {"const": "candidate_set"},
+        "failure_reason": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "codeOperation": {
+      "type": "object",
+      "required": ["id", "selector", "category", "classification", "call_site", "caller_function_id", "affected_method_ids", "affected_class_names", "screen_candidate_ids", "resource_candidates", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ui-code-operation:"},
+        "selector": {"type": "string", "minLength": 1},
+        "category": {"enum": ["hierarchy", "geometry", "constraint", "content", "asset", "appearance", "state", "action", "navigation"]},
+        "classification": {"$ref": "#/$defs/classification"},
+        "call_site": {"$ref": "#/$defs/nullableString"},
+        "caller_function_id": {"$ref": "#/$defs/nullableString"},
+        "affected_method_ids": {"$ref": "#/$defs/stringSet"},
+        "affected_class_names": {"$ref": "#/$defs/stringSet"},
+        "screen_candidate_ids": {"$ref": "#/$defs/stringSet"},
+        "resource_candidates": {"type": "array", "items": {"$ref": "#/$defs/operationResource"}},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "indexRecord": {
+      "type": "object",
+      "properties": {
+        "controller_class_name": {"type": "string", "minLength": 1},
+        "source_path": {"type": "string", "minLength": 1},
+        "logical_name": {"type": "string", "minLength": 1},
+        "screen_ids": {"$ref": "#/$defs/stringSet"},
+        "asset_ids": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "ui-model"},
+        "facts": {
+          "type": "object",
+          "required": ["catalog", "input_artifacts", "bundle_entrypoints", "summary", "interface_artifacts", "screens", "elements", "connections", "constraints", "navigation_edges", "localizations", "assets", "resource_references", "code_operations", "indexes", "evidence_boundary"],
+          "properties": {
+            "catalog": {
+              "type": "object",
+              "required": ["catalog_id", "catalog_version", "sha256", "controller_class_count", "element_tag_count", "selector_count"],
+              "properties": {
+                "catalog_id": {"const": "ipalift-ui-apis"},
+                "catalog_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+                "sha256": {"$ref": "#/$defs/sha256"},
+                "controller_class_count": {"type": "integer", "minimum": 1},
+                "element_tag_count": {"type": "integer", "minimum": 1},
+                "selector_count": {"type": "integer", "minimum": 1}
+              },
+              "additionalProperties": false
+            },
+            "input_artifacts": {"type": "array", "minItems": 8, "items": {"$ref": "#/$defs/inputArtifact"}},
+            "bundle_entrypoints": {
+              "type": "object",
+              "required": ["main_storyboards", "main_nibs", "launch_storyboards"],
+              "properties": {
+                "main_storyboards": {"$ref": "#/$defs/stringSet"},
+                "main_nibs": {"$ref": "#/$defs/stringSet"},
+                "launch_storyboards": {"$ref": "#/$defs/stringSet"}
+              },
+              "additionalProperties": false
+            },
+            "summary": {
+              "type": "object",
+              "required": ["interface_artifact_count", "decoded_interface_artifact_count", "partial_interface_artifact_count", "unresolved_interface_artifact_count", "screen_count", "element_count", "connection_count", "constraint_count", "navigation_edge_count", "localization_entry_count", "ui_asset_count", "resource_reference_count", "code_operation_count", "classified_record_count", "classification_counts", "failure_reason_counts", "error_count"],
+              "properties": {
+                "interface_artifact_count": {"type": "integer", "minimum": 0},
+                "decoded_interface_artifact_count": {"type": "integer", "minimum": 0},
+                "partial_interface_artifact_count": {"type": "integer", "minimum": 0},
+                "unresolved_interface_artifact_count": {"type": "integer", "minimum": 0},
+                "screen_count": {"type": "integer", "minimum": 0},
+                "element_count": {"type": "integer", "minimum": 0},
+                "connection_count": {"type": "integer", "minimum": 0},
+                "constraint_count": {"type": "integer", "minimum": 0},
+                "navigation_edge_count": {"type": "integer", "minimum": 0},
+                "localization_entry_count": {"type": "integer", "minimum": 0},
+                "ui_asset_count": {"type": "integer", "minimum": 0},
+                "resource_reference_count": {"type": "integer", "minimum": 0},
+                "code_operation_count": {"type": "integer", "minimum": 0},
+                "classified_record_count": {"type": "integer", "minimum": 0},
+                "classification_counts": {
+                  "type": "object",
+                  "required": ["exact", "candidate_set", "unresolved"],
+                  "properties": {"exact": {"type": "integer", "minimum": 0}, "candidate_set": {"type": "integer", "minimum": 0}, "unresolved": {"type": "integer", "minimum": 0}},
+                  "additionalProperties": false
+                },
+                "failure_reason_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}},
+                "error_count": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "interface_artifacts": {"type": "array", "items": {"$ref": "#/$defs/interfaceArtifact"}},
+            "screens": {"type": "array", "items": {"$ref": "#/$defs/screen"}},
+            "elements": {"type": "array", "items": {"$ref": "#/$defs/element"}},
+            "connections": {"type": "array", "items": {"$ref": "#/$defs/connection"}},
+            "constraints": {"type": "array", "items": {"$ref": "#/$defs/constraint"}},
+            "navigation_edges": {"type": "array", "items": {"$ref": "#/$defs/navigation"}},
+            "localizations": {"type": "array", "items": {"$ref": "#/$defs/localization"}},
+            "assets": {"type": "array", "items": {"$ref": "#/$defs/asset"}},
+            "resource_references": {"type": "array", "items": {"$ref": "#/$defs/resourceReference"}},
+            "code_operations": {"type": "array", "items": {"$ref": "#/$defs/codeOperation"}},
+            "indexes": {
+              "type": "object",
+              "required": ["screens_by_controller", "screens_by_source", "assets_by_logical_name"],
+              "properties": {
+                "screens_by_controller": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+                "screens_by_source": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}},
+                "assets_by_logical_name": {"type": "array", "items": {"$ref": "#/$defs/indexRecord"}}
+              },
+              "additionalProperties": false
+            },
+            "evidence_boundary": {
+              "type": "object",
+              "required": ["application_specific_rules_used", "visual_similarity_used_as_evidence", "names_used_to_invent_behavior", "programmatic_screen_candidates_marked_as_hypotheses", "function_level_resources_promoted_to_call_arguments", "upstream_artifacts_preserved"],
+              "properties": {
+                "application_specific_rules_used": {"const": false},
+                "visual_similarity_used_as_evidence": {"const": false},
+                "names_used_to_invent_behavior": {"const": false},
+                "programmatic_screen_candidates_marked_as_hypotheses": {"const": true},
+                "function_level_resources_promoted_to_call_arguments": {"const": false},
+                "upstream_artifacts_preserved": {"const": true}
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "kind", "subject_id", "candidate_ids", "confidence", "basis"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^ui-hypothesis:"},
+              "kind": {"enum": ["candidate_programmatic_screen", "candidate_ui_resource", "candidate_ui_code_match", "candidate_ui_code_operation"]},
+              "subject_id": {"type": "string", "minLength": 1},
+              "candidate_ids": {"$ref": "#/$defs/stringSet"},
+              "confidence": {"const": "medium"},
+              "basis": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "path", "message"],
+            "properties": {
+              "code": {"type": "string", "minLength": 1},
+              "path": {"type": "string", "minLength": 1},
+              "message": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

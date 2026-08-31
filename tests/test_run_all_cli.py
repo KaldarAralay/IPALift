@@ -13,7 +13,7 @@ from ipalift.full_run import FULL_RUN_STAGES, FullRunResult
 class RunAllCLITests(unittest.TestCase):
     def test_run_all_forwards_options_and_reports_progress(self) -> None:
         workspace = Path("workspace")
-        report = workspace / "reports" / "native-type-flow-report.md"
+        report = workspace / "reports" / "reconstruction-handoff-report.md"
         result = FullRunResult(workspace, FULL_RUN_STAGES, report)
         stdout = io.StringIO()
 
@@ -46,8 +46,8 @@ class RunAllCLITests(unittest.TestCase):
         self.assertEqual(45, kwargs["function_timeout"])
         self.assertEqual(7200, kwargs["analysis_timeout"])
         output = stdout.getvalue()
-        self.assertIn("[1/10] analyze", output)
-        self.assertIn("[10/10] infer-native-types", output)
+        self.assertIn("[1/13] analyze", output)
+        self.assertIn("[13/13] build-handoff", output)
         self.assertIn("Completed full IPALift pipeline", output)
         self.assertIn(str(report), output)
 

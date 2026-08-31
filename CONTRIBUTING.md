@@ -27,3 +27,7 @@ On macOS or Linux, use `.venv/bin/python` instead.
 Before opening a pull request, run the complete Python suite and confirm that no generated analysis
 workspace or private input was added. Changes to `reconstruction-core/` should also pass its CMake
 and CTest workflow documented in that directory.
+
+Release-affecting changes must also build both distributions and pass
+`python scripts/verify-release.py --dist-dir dist`. Do not post suspected vulnerabilities publicly;
+follow [SECURITY.md](SECURITY.md).
