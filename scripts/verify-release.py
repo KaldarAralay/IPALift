@@ -82,6 +82,7 @@ SDIST_REQUIRED_MEMBERS = {
     "src/ipalift/handoff.py",
     "src/ipalift/catalogs/handoff-policy-v1.json",
     "tests/test_handoff.py",
+    "tests/test_release_contract.py",
 }
 
 

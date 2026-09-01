@@ -30,6 +30,8 @@ Initial public release candidate.
 - User-facing failures are returned as concise CLI errors without tracebacks.
 - The handoff accepts both list-shaped provenance used by newer stages and the
   mapping-shaped provenance emitted by Objective-C type flow.
+- The Visual Studio 2022 reconstruction job uses GitHub's matching Windows 2022
+  runner image.
 
 ### Known limitations
 
