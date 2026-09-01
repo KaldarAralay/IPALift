@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 class ReleaseContractTests(unittest.TestCase):
-    def test_visual_studio_preset_uses_matching_ci_runner(self) -> None:
+    def test_visual_studio_ci_uses_explicit_instance_discovery(self) -> None:
         root = Path(__file__).parents[1]
         presets = json.loads(
             (root / "reconstruction-core" / "CMakePresets.json").read_text(encoding="utf-8")
@@ -24,6 +24,12 @@ class ReleaseContractTests(unittest.TestCase):
         )
         self.assertIsNotNone(job_match)
         self.assertRegex(job_match.group("body"), r"(?m)^    runs-on: windows-2022$")
+
+        build_script = (
+            root / "reconstruction-core" / "scripts" / "build-and-test.ps1"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Microsoft.VisualStudio.Component.VC.Tools.x86.x64", build_script)
+        self.assertIn("-DCMAKE_GENERATOR_INSTANCE=$visualStudioInstance", build_script)
 
 
 if __name__ == "__main__":
