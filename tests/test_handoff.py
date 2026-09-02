@@ -13,6 +13,7 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
+from ipalift.behavior import lift_behavior
 from ipalift.cli import main
 from ipalift.handoff import HandoffError, build_handoff
 from ipalift.interactions import recover_interactions
@@ -30,6 +31,8 @@ REQUIRED_INPUTS = (
     "platform-api-map",
     "ui-model",
     "interaction-model",
+    "behavior-ir",
+    "state-model",
 )
 
 
@@ -92,6 +95,8 @@ def build_handoff_workspace(root: Path) -> Path:
 
     recover_ui(workspace)
     recover_interactions(workspace)
+    refresh_shared_input_hashes(workspace)
+    lift_behavior(workspace)
     return workspace
 
 
@@ -99,16 +104,23 @@ def refresh_shared_input_hashes(workspace: Path) -> None:
     order = (
         "application",
         "assets",
+        "functions",
+        "callgraph",
         "recovered-code-index",
+        "objc-dispatch",
         "objc-type-flow",
         "platform-api-map",
         "native-type-flow",
         "ui-model",
         "interaction-model",
+        "behavior-ir",
+        "state-model",
     )
     analysis = workspace / "analysis"
     for consumer in order:
         path = analysis / f"{consumer}.json"
+        if not path.exists():
+            continue
         document = json.loads(path.read_text(encoding="utf-8"))
         changed = False
         references = document.get("facts", {}).get("input_artifacts", [])
@@ -121,7 +133,7 @@ def refresh_shared_input_hashes(workspace: Path) -> None:
             )
         for artifact, reference in iterator:
             source = analysis / f"{artifact}.json"
-            if artifact in REQUIRED_INPUTS and source.exists():
+            if source.exists():
                 reference["sha256"] = sha256_file(source)
                 changed = True
         if changed:
@@ -191,6 +203,7 @@ class HandoffTests(unittest.TestCase):
             self.assertTrue({
                 "screen", "component", "asset", "navigation", "interaction", "state",
                 "persistence", "networking", "platform_dependency", "code_unit", "type_context",
+                "behavior_contract", "state_machine",
             }.issubset(all_kinds))
             for artifact, collection, key in (
                 ("ui-model", "elements", "id"),
@@ -200,6 +213,10 @@ class HandoffTests(unittest.TestCase):
                 ("interaction-model", "effects", "id"),
                 ("recovered-code-index", "functions", "function_id"),
                 ("platform-api-map", "dependencies", "id"),
+                ("behavior-ir", "function_contracts", "id"),
+                ("state-model", "state_variables", "id"),
+                ("state-model", "transitions", "id"),
+                ("state-model", "state_machines", "id"),
             ):
                 source = json.loads((analysis / f"{artifact}.json").read_text(encoding="utf-8"))
                 expected = {str(item[key]) for item in source["facts"].get(collection, []) if item.get(key)}
@@ -274,6 +291,8 @@ class HandoffTests(unittest.TestCase):
             element_id = element["id"]
             write_json_atomic(ui_path, ui)
             recover_interactions(workspace)
+            refresh_shared_input_hashes(workspace)
+            lift_behavior(workspace)
 
             result = build_handoff(workspace)
             items = [
@@ -313,6 +332,7 @@ class HandoffTests(unittest.TestCase):
             }
             write_json_atomic(path, document)
             refresh_shared_input_hashes(workspace)
+            lift_behavior(workspace)
 
             result = build_handoff(workspace)
             self.assertTrue(result.manifest_path.is_file())
@@ -356,6 +376,7 @@ class HandoffTests(unittest.TestCase):
             document = json.loads(path.read_text(encoding="utf-8"))
             document["facts"]["interactions"][0]["trigger_id"] = "interaction-trigger:missing"
             write_json_atomic(path, document)
+            refresh_shared_input_hashes(workspace)
             with self.assertRaisesRegex(HandoffError, "unknown trigger"):
                 build_handoff(workspace)
 

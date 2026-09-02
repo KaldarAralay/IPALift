@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .behavior import lift_behavior
 from .cpp_model import recover_cpp_model
 from .dispatch import resolve_objc_dispatch
 from .errors import IPALiftError
@@ -123,6 +124,15 @@ def build_parser() -> argparse.ArgumentParser:
         "workspace",
         type=Path,
         help="completed IPALift workspace containing the recovered UI model",
+    )
+    behavior_parser = subcommands.add_parser(
+        "lift-behavior",
+        help="lift verified static evidence into function contracts and state machines",
+    )
+    behavior_parser.add_argument(
+        "workspace",
+        type=Path,
+        help="completed IPALift workspace containing the interaction model",
     )
     handoff_parser = subcommands.add_parser(
         "build-handoff",
@@ -299,6 +309,30 @@ def main(argv: list[str] | None = None) -> int:
                 f"unresolved: {counts['unresolved']}"
             )
             print(f"Interaction model: {result.interaction_model_path}")
+            print(f"Report: {result.report_path}")
+            return 0
+        if args.command == "lift-behavior":
+            result = lift_behavior(args.workspace)
+            behavior_summary = result.behavior_ir["facts"]["summary"]
+            state_summary = result.state_model["facts"]["summary"]
+            counts = behavior_summary["classification_counts"]
+            print(f"Lifted deterministic behavior in {result.workspace}")
+            print(
+                f"Functions: {behavior_summary['function_contract_count']}; "
+                f"guards: {behavior_summary['branch_guard_count']}; "
+                f"state accesses: {behavior_summary['state_access_count']}"
+            )
+            print(
+                f"State variables: {state_summary['state_variable_count']}; "
+                f"transitions: {state_summary['transition_count']}; "
+                f"machines: {state_summary['state_machine_count']}"
+            )
+            print(
+                f"Exact: {counts['exact']}; candidate sets: {counts['candidate_set']}; "
+                f"unresolved: {counts['unresolved']}"
+            )
+            print(f"Behavior IR: {result.behavior_ir_path}")
+            print(f"State model: {result.state_model_path}")
             print(f"Report: {result.report_path}")
             return 0
         if args.command == "build-handoff":

@@ -34,6 +34,7 @@ EXPECTED_ANALYSIS_ARTIFACTS = {
     "application",
     "architectures",
     "assets",
+    "behavior-ir",
     "callgraph",
     "classes",
     "cpp-object-model",
@@ -47,6 +48,7 @@ EXPECTED_ANALYSIS_ARTIFACTS = {
     "platform-api-map",
     "reconstruction-handoff",
     "recovered-code-index",
+    "state-model",
     "strings",
     "ui-model",
     "unresolved",
@@ -54,9 +56,11 @@ EXPECTED_ANALYSIS_ARTIFACTS = {
 WHEEL_REQUIRED_MEMBERS = {
     "ipalift/__init__.py",
     "ipalift/__main__.py",
+    "ipalift/behavior.py",
     "ipalift/cli.py",
     "ipalift/full_run.py",
     "ipalift/handoff.py",
+    "ipalift/catalogs/behavior-policy-v1.json",
     "ipalift/catalogs/handoff-policy-v1.json",
     "ipalift/catalogs/interaction-apis-v1.json",
     "ipalift/catalogs/platform-apis-v1.json",
@@ -76,11 +80,16 @@ SDIST_REQUIRED_MEMBERS = {
     "docs/release-checklist.md",
     "docs/troubleshooting.md",
     "pyproject.toml",
+    "schemas/behavior-ir.schema.json",
     "schemas/reconstruction-handoff.schema.json",
     "schemas/reconstruction-work-packet.schema.json",
+    "schemas/state-model.schema.json",
     "scripts/verify-release.py",
+    "src/ipalift/behavior.py",
     "src/ipalift/handoff.py",
+    "src/ipalift/catalogs/behavior-policy-v1.json",
     "src/ipalift/catalogs/handoff-policy-v1.json",
+    "tests/test_behavior.py",
     "tests/test_handoff.py",
     "tests/test_release_contract.py",
 }
@@ -460,7 +469,7 @@ def verify_installed_artifact(
             environment=clean_environment,
             timeout=1200,
         )
-        if "[13/13] build-handoff" not in completed.stdout:
+        if "[14/14] build-handoff" not in completed.stdout:
             raise VerificationError(f"{label} run-all did not reach the handoff stage")
         validate_workspace(output, schema_root)
     compare_workspaces(first, second)

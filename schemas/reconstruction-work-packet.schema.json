@@ -63,7 +63,7 @@
     },
     "relatedIds": {
       "type": "object",
-      "required": ["screen_ids", "element_ids", "asset_ids", "navigation_ids", "interaction_ids", "trigger_ids", "effect_ids", "function_ids", "method_ids", "class_names", "type_value_ids", "platform_dependency_ids", "pseudocode_paths"],
+      "required": ["screen_ids", "element_ids", "asset_ids", "navigation_ids", "interaction_ids", "trigger_ids", "effect_ids", "function_ids", "method_ids", "class_names", "type_value_ids", "platform_dependency_ids", "behavior_contract_ids", "state_variable_ids", "state_ids", "transition_ids", "state_machine_ids", "async_callback_ids", "pseudocode_paths"],
       "properties": {
         "screen_ids": {"$ref": "#/$defs/stringSet"},
         "element_ids": {"$ref": "#/$defs/stringSet"},
@@ -77,13 +77,19 @@
         "class_names": {"$ref": "#/$defs/stringSet"},
         "type_value_ids": {"$ref": "#/$defs/stringSet"},
         "platform_dependency_ids": {"$ref": "#/$defs/stringSet"},
+        "behavior_contract_ids": {"$ref": "#/$defs/stringSet"},
+        "state_variable_ids": {"$ref": "#/$defs/stringSet"},
+        "state_ids": {"$ref": "#/$defs/stringSet"},
+        "transition_ids": {"$ref": "#/$defs/stringSet"},
+        "state_machine_ids": {"$ref": "#/$defs/stringSet"},
+        "async_callback_ids": {"$ref": "#/$defs/stringSet"},
         "pseudocode_paths": {"$ref": "#/$defs/stringSet"}
       },
       "additionalProperties": false
     },
     "relatedOverflow": {
       "type": "object",
-      "required": ["screen_ids", "element_ids", "asset_ids", "navigation_ids", "interaction_ids", "trigger_ids", "effect_ids", "function_ids", "method_ids", "class_names", "type_value_ids", "platform_dependency_ids", "pseudocode_paths"],
+      "required": ["screen_ids", "element_ids", "asset_ids", "navigation_ids", "interaction_ids", "trigger_ids", "effect_ids", "function_ids", "method_ids", "class_names", "type_value_ids", "platform_dependency_ids", "behavior_contract_ids", "state_variable_ids", "state_ids", "transition_ids", "state_machine_ids", "async_callback_ids", "pseudocode_paths"],
       "properties": {
         "screen_ids": {"type": "integer", "minimum": 0},
         "element_ids": {"type": "integer", "minimum": 0},
@@ -97,6 +103,12 @@
         "class_names": {"type": "integer", "minimum": 0},
         "type_value_ids": {"type": "integer", "minimum": 0},
         "platform_dependency_ids": {"type": "integer", "minimum": 0},
+        "behavior_contract_ids": {"type": "integer", "minimum": 0},
+        "state_variable_ids": {"type": "integer", "minimum": 0},
+        "state_ids": {"type": "integer", "minimum": 0},
+        "transition_ids": {"type": "integer", "minimum": 0},
+        "state_machine_ids": {"type": "integer", "minimum": 0},
+        "async_callback_ids": {"type": "integer", "minimum": 0},
         "pseudocode_paths": {"type": "integer", "minimum": 0}
       },
       "additionalProperties": false
@@ -106,7 +118,7 @@
       "required": ["id", "kind", "subject_id", "screen_id", "classification", "title", "implementation_rank", "implementation_phase", "priority_basis", "details", "related_ids", "related_id_overflow_counts", "evidence_links", "omitted_evidence_link_count", "candidate_alternatives", "omitted_candidate_alternative_count", "unresolved_questions", "omitted_question_count", "failure_reasons", "omitted_failure_reason_count"],
       "properties": {
         "id": {"type": "string", "pattern": "^handoff-work-item:[0-9a-f]{20}$"},
-        "kind": {"enum": ["screen", "component", "asset", "navigation", "interaction", "state", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"]},
+        "kind": {"enum": ["screen", "component", "asset", "navigation", "interaction", "behavior_contract", "state", "state_machine", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"]},
         "subject_id": {"type": "string", "minLength": 1},
         "screen_id": {"$ref": "#/$defs/nullableString"},
         "classification": {"$ref": "#/$defs/classification"},

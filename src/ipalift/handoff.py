@@ -40,6 +40,8 @@ REQUIRED_REPORTS = (
     "platform-api-map",
     "ui-model",
     "interaction-model",
+    "behavior-ir",
+    "state-model",
 )
 CLASSIFICATIONS = ("exact", "candidate_set", "unresolved")
 RELATED_ID_KINDS = (
@@ -55,6 +57,12 @@ RELATED_ID_KINDS = (
     "class_names",
     "type_value_ids",
     "platform_dependency_ids",
+    "behavior_contract_ids",
+    "state_variable_ids",
+    "state_ids",
+    "transition_ids",
+    "state_machine_ids",
+    "async_callback_ids",
     "pseudocode_paths",
 )
 EFFECT_ITEM_KIND = {
@@ -760,6 +768,7 @@ def _write_packets_atomic(workspace: Path, packets: list[dict[str, Any]]) -> Pat
 
 def _render_report(facts: dict[str, Any]) -> str:
     summary = facts["summary"]
+    inventory = facts["source_inventory"]
     lines = [
         "# IPALift reconstruction handoff report",
         "",
@@ -773,6 +782,11 @@ def _render_report(facts: dict[str, Any]) -> str:
         f"- Candidate alternatives: {summary['candidate_alternative_count']}",
         f"- Unresolved questions: {summary['unresolved_question_count']}",
         f"- Verified pseudocode artifacts: {summary['pseudocode_artifact_count']}",
+        f"- Function behavior contracts: {inventory['behavior_contract_count']}",
+        f"- State variables: {inventory['state_variable_count']}",
+        f"- State transition candidates: {inventory['state_transition_count']}",
+        f"- State machines: {inventory['state_machine_count']}",
+        f"- Asynchronous callbacks: {inventory['async_callback_count']}",
         "",
         "## Screen work packets",
         "",
@@ -840,6 +854,8 @@ def build_handoff(workspace: Path) -> HandoffResult:
 
     ui = reports["ui-model"]["facts"]
     interaction = reports["interaction-model"]["facts"]
+    behavior = reports["behavior-ir"]["facts"]
+    state_model = reports["state-model"]["facts"]
     recovered = reports["recovered-code-index"]["facts"]
     platform = reports["platform-api-map"]["facts"]
     objc_types = reports["objc-type-flow"]["facts"]
@@ -864,6 +880,12 @@ def build_handoff(workspace: Path) -> HandoffResult:
     native_globals = list(native_types.get("globals") or [])
     native_layouts = list(native_types.get("layouts") or [])
     archive_assets = list(assets_report.get("assets") or [])
+    behavior_contracts = list(behavior.get("function_contracts") or [])
+    state_variables = list(state_model.get("state_variables") or [])
+    state_nodes = list(state_model.get("states") or [])
+    state_transitions = list(state_model.get("transitions") or [])
+    state_machines = list(state_model.get("state_machines") or [])
+    behavior_async_callbacks = list(behavior.get("async_callbacks") or [])
 
     screen_by_id, screen_pos = _unique_records(screens, "id", "ui-model screens")
     element_by_id, element_pos = _unique_records(elements, "id", "ui-model elements")
@@ -882,6 +904,30 @@ def build_handoff(workspace: Path) -> HandoffResult:
     native_value_by_id, native_value_pos = _unique_records(native_values, "id", "native type values")
     native_global_by_id, native_global_pos = _unique_records(native_globals, "id", "native globals")
     native_layout_by_id, native_layout_pos = _unique_records(native_layouts, "id", "native layouts")
+    behavior_contract_by_id, behavior_contract_pos = _unique_records(
+        behavior_contracts, "id", "behavior contracts"
+    )
+    state_variable_by_id, state_variable_pos = _unique_records(
+        state_variables, "id", "state variables"
+    )
+    state_node_by_id, state_node_pos = _unique_records(state_nodes, "id", "state nodes")
+    state_transition_by_id, state_transition_pos = _unique_records(
+        state_transitions, "id", "state transitions"
+    )
+    state_machine_by_id, state_machine_pos = _unique_records(
+        state_machines, "id", "state machines"
+    )
+    behavior_callback_by_id, behavior_callback_pos = _unique_records(
+        behavior_async_callbacks, "id", "behavior asynchronous callbacks"
+    )
+    state_variable_by_access = {
+        str(access_id): str(variable["id"])
+        for variable in state_variables
+        for access_id in [
+            *variable.get("read_access_ids", []),
+            *variable.get("write_access_ids", []),
+        ]
+    }
     archive_asset_by_bundle_path: dict[str, tuple[dict[str, Any], int, str]] = {}
     for index, asset in enumerate(archive_assets):
         bundle_path = str(asset.get("bundle_relative_path") or asset.get("path") or "")
@@ -904,6 +950,17 @@ def build_handoff(workspace: Path) -> HandoffResult:
             raise HandoffError(f"Interaction {record.get('id')} references an unknown call slice")
         if any(str(value) not in effect_by_id for value in record.get("effect_ids", [])):
             raise HandoffError(f"Interaction {record.get('id')} references an unknown effect")
+
+    for contract in behavior_contracts:
+        function_id = str(contract.get("function_id") or "")
+        if function_id not in function_by_id:
+            raise HandoffError(f"Behavior contract {contract.get('id')} references an unknown function")
+    for transition in state_transitions:
+        if str(transition.get("interaction_id") or "") not in interaction_by_id:
+            raise HandoffError(f"State transition {transition.get('id')} references an unknown interaction")
+    for machine in state_machines:
+        if any(str(value) not in state_transition_by_id for value in machine.get("transition_ids", [])):
+            raise HandoffError(f"State machine {machine.get('id')} references an unknown transition")
 
     pseudocode_artifacts = _verify_pseudocode(workspace, recovered_functions, bounds)
     pseudocode_by_function = {item["function_id"]: item for item in pseudocode_artifacts}
@@ -1352,6 +1409,191 @@ def build_handoff(workspace: Path) -> HandoffResult:
                 failure_reasons=effect.get("failure_reasons", []),
                 bounds=bounds,
             ))
+
+    for contract in sorted(behavior_contracts, key=lambda item: str(item.get("id") or "")):
+        contract_id = str(contract["id"])
+        function_id = str(contract.get("function_id") or "")
+        classification = _record_classification(contract)
+        link = _record_link(
+            "behavior-ir", "function_contracts", behavior_contract_pos[contract_id],
+            contract_id, classification, input_hashes,
+        )
+        scopes: list[str | None] = sorted({
+            *[str(value) for value in contract.get("screen_ids", [])],
+            *function_scopes.get(function_id, set()),
+        }) or [None]
+        for scope in scopes:
+            add_item(_work_item(
+                scope=scope,
+                kind="behavior_contract",
+                subject_id=contract_id,
+                classification=classification,
+                title=f"Behavior contract {function_id or contract_id}",
+                details={
+                    "function_id": function_id,
+                    "signature": contract.get("signature"),
+                    "parameters": contract.get("parameters", []),
+                    "return_behavior": contract.get("return_behavior"),
+                    "branch_guard_ids": contract.get("branch_guard_ids", []),
+                    "state_read_ids": contract.get("state_read_ids", []),
+                    "state_write_ids": contract.get("state_write_ids", []),
+                    "constant_ids": contract.get("constant_ids", []),
+                    "outgoing_call_ids": contract.get("outgoing_call_ids", []),
+                    "async_callback_ids": contract.get("async_callback_ids", []),
+                },
+                related_ids={
+                    "screen_ids": [scope, *contract.get("screen_ids", [])],
+                    "interaction_ids": contract.get("interaction_ids", []),
+                    "function_ids": [function_id],
+                    "method_ids": contract.get("method_ids", []),
+                    "behavior_contract_ids": [contract_id],
+                    "async_callback_ids": contract.get("async_callback_ids", []),
+                },
+                evidence_links=[link],
+                candidate_alternatives=[],
+                failure_reasons=contract.get("failure_reasons", []),
+                bounds=bounds,
+            ))
+
+    for variable in sorted(state_variables, key=lambda item: str(item.get("id") or "")):
+        variable_id = str(variable["id"])
+        classification = _record_classification(variable)
+        link = _record_link(
+            "state-model", "state_variables", state_variable_pos[variable_id],
+            variable_id, classification, input_hashes,
+        )
+        function_ids = sorted({
+            *[str(value) for value in variable.get("reader_function_ids", [])],
+            *[str(value) for value in variable.get("writer_function_ids", [])],
+        })
+        scopes = sorted({
+            screen_id
+            for function_id in function_ids
+            for screen_id in function_scopes.get(function_id, set())
+        }) or [None]
+        for scope in scopes:
+            add_item(_work_item(
+                scope=scope,
+                kind="state",
+                subject_id=variable_id,
+                classification=classification,
+                title=f"State variable {variable.get('member_names') or variable_id}",
+                details={
+                    "owner_class_names": variable.get("owner_class_names", []),
+                    "member_names": variable.get("member_names", []),
+                    "type_candidates": variable.get("type_candidates", []),
+                    "read_access_ids": variable.get("read_access_ids", []),
+                    "write_access_ids": variable.get("write_access_ids", []),
+                    "observed_write_expressions": variable.get("observed_write_expressions", []),
+                },
+                related_ids={
+                    "screen_ids": [scope],
+                    "function_ids": function_ids,
+                    "class_names": variable.get("owner_class_names", []),
+                    "state_variable_ids": [variable_id],
+                },
+                evidence_links=[link],
+                candidate_alternatives=[],
+                failure_reasons=variable.get("failure_reasons", []),
+                bounds=bounds,
+            ))
+
+    state_screen_by_id = {
+        str(record["id"]): str(record.get("screen_id") or "")
+        for record in state_nodes if record.get("id")
+    }
+    for transition in sorted(state_transitions, key=lambda item: str(item.get("id") or "")):
+        transition_id = str(transition["id"])
+        classification = _record_classification(transition)
+        link = _record_link(
+            "state-model", "transitions", state_transition_pos[transition_id],
+            transition_id, classification, input_hashes,
+        )
+        source_screen_ids = sorted({
+            state_screen_by_id.get(str(value), "")
+            for value in transition.get("source_state_ids", [])
+        } - {""})
+        scopes: list[str | None] = source_screen_ids or [None]
+        variable_ids = sorted({
+            state_variable_by_access.get(str(access_id), "")
+            for access_id in [
+                *transition.get("state_read_access_ids", []),
+                *transition.get("state_write_access_ids", []),
+            ]
+        } - {""})
+        for scope in scopes:
+            add_item(_work_item(
+                scope=scope,
+                kind="state_machine",
+                subject_id=transition_id,
+                classification=classification,
+                title=f"State transition {transition.get('event') or transition_id}",
+                details={
+                    "record_kind": "transition",
+                    "event": transition.get("event"),
+                    "source_state_ids": transition.get("source_state_ids", []),
+                    "destination_state_ids": transition.get("destination_state_ids", []),
+                    "branch_guard_ids": transition.get("branch_guard_ids", []),
+                    "state_read_access_ids": transition.get("state_read_access_ids", []),
+                    "state_write_access_ids": transition.get("state_write_access_ids", []),
+                    "effect_ids": transition.get("effect_ids", []),
+                    "async_callback_ids": transition.get("async_callback_ids", []),
+                },
+                related_ids={
+                    "screen_ids": [scope],
+                    "interaction_ids": [transition.get("interaction_id")],
+                    "trigger_ids": [transition.get("trigger_id")],
+                    "effect_ids": transition.get("effect_ids", []),
+                    "function_ids": transition.get("handler_function_ids", []),
+                    "state_ids": [
+                        *transition.get("source_state_ids", []),
+                        *transition.get("destination_state_ids", []),
+                    ],
+                    "state_variable_ids": variable_ids,
+                    "transition_ids": [transition_id],
+                    "async_callback_ids": transition.get("async_callback_ids", []),
+                },
+                evidence_links=[link],
+                candidate_alternatives=[],
+                failure_reasons=transition.get("failure_reasons", []),
+                bounds=bounds,
+            ))
+
+    for machine in sorted(state_machines, key=lambda item: str(item.get("id") or "")):
+        machine_id = str(machine["id"])
+        classification = _record_classification(machine)
+        link = _record_link(
+            "state-model", "state_machines", state_machine_pos[machine_id],
+            machine_id, classification, input_hashes,
+        )
+        scope = str(machine.get("screen_id") or "") or None
+        add_item(_work_item(
+            scope=scope,
+            kind="state_machine",
+            subject_id=machine_id,
+            classification=classification,
+            title=f"{machine.get('scope') or 'application'} state machine",
+            details={
+                "record_kind": "state_machine",
+                "scope": machine.get("scope"),
+                "state_ids": machine.get("state_ids", []),
+                "state_variable_ids": machine.get("state_variable_ids", []),
+                "transition_ids": machine.get("transition_ids", []),
+                "async_callback_ids": machine.get("async_callback_ids", []),
+            },
+            related_ids={
+                "screen_ids": [scope],
+                "state_ids": machine.get("state_ids", []),
+                "state_variable_ids": machine.get("state_variable_ids", []),
+                "transition_ids": machine.get("transition_ids", []),
+                "state_machine_ids": [machine_id],
+                "async_callback_ids": machine.get("async_callback_ids", []),
+            },
+            evidence_links=[link],
+            candidate_alternatives=[],
+            failure_reasons=machine.get("failure_reasons", []),
+            bounds=bounds,
+        ))
 
     type_ids_by_function: dict[str, list[str]] = defaultdict(list)
     for function_id, records in objc_values_by_function.items():
@@ -1804,6 +2046,11 @@ def build_handoff(workspace: Path) -> HandoffResult:
         "native_global_count": len(native_globals),
         "native_layout_count": len(native_layouts),
         "platform_dependency_count": len(platform_dependencies),
+        "behavior_contract_count": len(behavior_contracts),
+        "state_variable_count": len(state_variables),
+        "state_transition_count": len(state_transitions),
+        "state_machine_count": len(state_machines),
+        "async_callback_count": len(behavior_async_callbacks),
         "upstream_hypothesis_count": sum(len(reports[name]["hypotheses"]) for name in REQUIRED_REPORTS),
         "upstream_error_count": sum(len(reports[name]["errors"]) for name in REQUIRED_REPORTS),
     }

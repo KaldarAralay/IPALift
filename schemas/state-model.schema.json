@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipalift.local/schemas/state-model.schema.json",
+  "title": "IPALift deterministic application state model",
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "classification": {"enum": ["exact", "candidate_set", "unresolved"]},
+    "confidence": {"enum": ["high", "medium", "low"]},
+    "nullableString": {"type": ["string", "null"]},
+    "stringSet": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "countMap": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "classificationCounts": {
+      "type": "object",
+      "required": ["exact", "candidate_set", "unresolved"],
+      "properties": {
+        "exact": {"type": "integer", "minimum": 0},
+        "candidate_set": {"type": "integer", "minimum": 0},
+        "unresolved": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "evidenceLink": {
+      "type": "object",
+      "required": ["kind", "artifact", "path", "json_pointer", "record_id", "classification", "sha256"],
+      "properties": {
+        "kind": {"enum": ["artifact_record", "pseudocode"]},
+        "artifact": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "json_pointer": {"type": "string"},
+        "record_id": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "inputArtifact": {
+      "type": "object",
+      "required": ["artifact", "path", "sha256", "size"],
+      "properties": {
+        "artifact": {"enum": ["behavior-ir", "interaction-model", "objc-type-flow", "native-type-flow"]},
+        "path": {"type": "string", "pattern": "^analysis/[^/]+\\.json$"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "stateVariable": {
+      "type": "object",
+      "required": ["id", "owner_class_names", "member_names", "type_candidates", "read_access_ids", "write_access_ids", "reader_function_ids", "writer_function_ids", "observed_write_expressions", "classification", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "owner_class_names": {"$ref": "#/$defs/stringSet"},
+        "member_names": {"$ref": "#/$defs/stringSet"},
+        "type_candidates": {"$ref": "#/$defs/stringSet"},
+        "read_access_ids": {"$ref": "#/$defs/stringSet"},
+        "write_access_ids": {"$ref": "#/$defs/stringSet"},
+        "reader_function_ids": {"$ref": "#/$defs/stringSet"},
+        "writer_function_ids": {"$ref": "#/$defs/stringSet"},
+        "observed_write_expressions": {"$ref": "#/$defs/stringSet"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "evidence": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/evidenceLink"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "object",
+      "required": ["id", "kind", "screen_id", "name", "classification", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^state-node:[0-9a-f]{20}$"},
+        "kind": {"const": "screen"},
+        "screen_id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "evidence": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/evidenceLink"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "transition": {
+      "type": "object",
+      "required": ["id", "interaction_id", "trigger_id", "event", "source_state_ids", "destination_state_ids", "handler_function_ids", "branch_guard_ids", "state_read_access_ids", "state_write_access_ids", "effect_ids", "async_callback_ids", "classification", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^state-transition:[0-9a-f]{20}$"},
+        "interaction_id": {"type": "string", "minLength": 1},
+        "trigger_id": {"type": "string", "minLength": 1},
+        "event": {},
+        "source_state_ids": {"$ref": "#/$defs/stringSet"},
+        "destination_state_ids": {"$ref": "#/$defs/stringSet"},
+        "handler_function_ids": {"$ref": "#/$defs/stringSet"},
+        "branch_guard_ids": {"$ref": "#/$defs/stringSet"},
+        "state_read_access_ids": {"$ref": "#/$defs/stringSet"},
+        "state_write_access_ids": {"$ref": "#/$defs/stringSet"},
+        "effect_ids": {"$ref": "#/$defs/stringSet"},
+        "async_callback_ids": {"$ref": "#/$defs/stringSet"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "evidence": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/evidenceLink"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "stateMachine": {
+      "type": "object",
+      "required": ["id", "scope", "screen_id", "state_ids", "state_variable_ids", "transition_ids", "async_callback_ids", "classification", "evidence", "failure_reasons"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^state-machine:[0-9a-f]{20}$"},
+        "scope": {"enum": ["application", "screen"]},
+        "screen_id": {"$ref": "#/$defs/nullableString"},
+        "state_ids": {"$ref": "#/$defs/stringSet"},
+        "state_variable_ids": {"$ref": "#/$defs/stringSet"},
+        "transition_ids": {"$ref": "#/$defs/stringSet"},
+        "async_callback_ids": {"$ref": "#/$defs/stringSet"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "evidence": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/evidenceLink"}},
+        "failure_reasons": {"$ref": "#/$defs/stringSet"}
+      },
+      "additionalProperties": false
+    },
+    "asyncCallback": {"$ref": "behavior-ir.schema.json#/$defs/asyncCallback"},
+    "hypothesis": {
+      "type": "object",
+      "required": ["id", "kind", "subject_id", "confidence", "basis"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^state-hypothesis:[0-9a-f]{20}$"},
+        "kind": {"const": "candidate_state_record"},
+        "subject_id": {"type": "string", "minLength": 1},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "basis": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {"$ref": "report-envelope.schema.json"},
+    {
+      "properties": {
+        "artifact": {"const": "state-model"},
+        "facts": {
+          "type": "object",
+          "required": ["policy", "input_artifacts", "summary", "state_variables", "states", "transitions", "state_machines", "async_callbacks", "evidence_boundary"],
+          "properties": {
+            "policy": {
+              "type": "object",
+              "required": ["catalog_id", "catalog_version", "sha256", "bounds"],
+              "properties": {
+                "catalog_id": {"const": "ipalift-behavior-policy"},
+                "catalog_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+                "sha256": {"$ref": "#/$defs/sha256"},
+                "bounds": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}}
+              },
+              "additionalProperties": false
+            },
+            "input_artifacts": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/inputArtifact"}},
+            "summary": {
+              "type": "object",
+              "required": ["state_variable_count", "state_count", "transition_count", "state_machine_count", "async_callback_count", "classified_record_count", "classification_counts", "failure_reason_counts", "error_count"],
+              "properties": {
+                "state_variable_count": {"type": "integer", "minimum": 0},
+                "state_count": {"type": "integer", "minimum": 0},
+                "transition_count": {"type": "integer", "minimum": 0},
+                "state_machine_count": {"type": "integer", "minimum": 0},
+                "async_callback_count": {"type": "integer", "minimum": 0},
+                "classified_record_count": {"type": "integer", "minimum": 0},
+                "classification_counts": {"$ref": "#/$defs/classificationCounts"},
+                "failure_reason_counts": {"$ref": "#/$defs/countMap"},
+                "error_count": {"const": 0}
+              },
+              "additionalProperties": false
+            },
+            "state_variables": {"type": "array", "items": {"$ref": "#/$defs/stateVariable"}},
+            "states": {"type": "array", "items": {"$ref": "#/$defs/state"}},
+            "transitions": {"type": "array", "items": {"$ref": "#/$defs/transition"}},
+            "state_machines": {"type": "array", "items": {"$ref": "#/$defs/stateMachine"}},
+            "async_callbacks": {"type": "array", "items": {"$ref": "#/$defs/asyncCallback"}},
+            "evidence_boundary": {
+              "type": "object",
+              "required": ["transitions_claim_runtime_execution", "initial_runtime_state_invented", "guard_to_effect_paths_claimed_exact", "candidate_sets_promoted", "application_specific_rules_used", "upstream_artifacts_preserved"],
+              "properties": {
+                "transitions_claim_runtime_execution": {"const": false},
+                "initial_runtime_state_invented": {"const": false},
+                "guard_to_effect_paths_claimed_exact": {"const": false},
+                "candidate_sets_promoted": {"const": false},
+                "application_specific_rules_used": {"const": false},
+                "upstream_artifacts_preserved": {"const": true}
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "hypotheses": {"type": "array", "items": {"$ref": "#/$defs/hypothesis"}},
+        "errors": {"type": "array", "maxItems": 0}
+      }
+    }
+  ]
+}

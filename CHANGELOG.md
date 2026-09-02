@@ -14,6 +14,9 @@ Initial public release candidate.
   pseudocode status, and explicit failure reporting.
 - Evidence-bounded Objective-C dispatch/type flow, platform API mapping, C++
   ABI recovery, native type flow, UI recovery, and interaction recovery.
+- Deterministic behavioral lifting into per-function contracts and application/
+  screen state-machine candidates with verified pseudocode hashes and explicit
+  runtime-evidence boundaries.
 - A final deterministic reconstruction manifest and bounded per-screen work
   packets with evidence links, candidate alternatives, unresolved questions,
   and implementation ordering.

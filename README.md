@@ -4,7 +4,7 @@ IPALift turns a legally obtained, decrypted iOS IPA into a deterministic,
 evidence-linked reverse-engineering workspace. It inventories the application,
 analyzes Mach-O and Objective-C metadata, runs Ghidra headlessly, organizes
 pseudocode, and builds conservative Objective-C, platform API, C++, native
-type, user-interface, and interaction models, then packages them into a reconstruction handoff.
+type, user-interface, interaction, behavioral-contract, and application-state models, then packages them into a reconstruction handoff.
 
 IPALift does not decrypt App Store binaries, recover original source code, or
 infer gameplay from names. Facts, hypotheses, and unresolved evidence stay
@@ -31,6 +31,9 @@ separate so a person or coding agent can see what is known and what is not.
   lifecycle methods, delegates, notifications, timers, and callbacks, with
   bounded call slices and explicit state, navigation, persistence, network,
   notification, timer, and platform effects.
+- Per-function behavioral contracts and application/screen state-machine
+  candidates derived from verified pseudocode, type flow, calls, and interaction
+  evidence without claiming runtime execution.
 - Bounded per-screen reconstruction work packets with exact evidence links,
   candidate alternatives, unresolved questions, verified pseudocode references,
   and a deterministic evidence-prioritized implementation order.
@@ -91,8 +94,8 @@ analysis-output directory.
 .\.venv\Scripts\ipalift.exe run-all path\to\Example.ipa --output analysis-output\example --ghidra-home C:\tools\ghidra_12.1.3_PUBLIC
 ~~~
 
-`run-all` executes all thirteen stages in dependency order, including the second
-Objective-C dispatch/type-flow refinement pass, UI and interaction recovery, and the final bounded reconstruction handoff. It
+`run-all` executes all fourteen stages in dependency order, including the second
+Objective-C dispatch/type-flow refinement pass, UI/interaction recovery, behavioral lifting, and the final bounded reconstruction handoff. It
 prints each stage as it starts and stops on the first error. The individual
 commands below remain available when you want to inspect, resume, or repeat a
 specific stage.
@@ -143,6 +146,7 @@ ipalift recover-cpp-model analysis-output\example
 ipalift infer-native-types analysis-output\example
 ipalift recover-ui analysis-output\example
 ipalift recover-interactions analysis-output\example
+ipalift lift-behavior analysis-output\example
 ipalift build-handoff analysis-output\example
 ~~~
 
@@ -154,8 +158,11 @@ serialized facts separately from code/resource candidates and unresolved data.
 `recover-interactions` then consumes that UI model without reparsing it and writes
 `analysis/interaction-model.json` plus
 `reports/interaction-reconstruction-report.md`, connecting triggers to bounded
-call-graph slices and evidence-linked effects. `build-handoff` verifies the shared
-input hashes and pseudocode artifacts, then writes
+call-graph slices and evidence-linked effects. `lift-behavior` converts verified
+pseudocode, type flow, call edges, and interactions into `analysis/behavior-ir.json`
+and `analysis/state-model.json`; all transitions remain candidates requiring
+runtime validation. `build-handoff` verifies the shared input hashes and
+pseudocode artifacts, then writes
 `analysis/reconstruction-handoff.json`, bounded JSON packets under
 `handoff/work-packets/`, and `reports/reconstruction-handoff-report.md`.
 
@@ -182,6 +189,8 @@ analysis-output/example/
 |   |-- native-type-flow.json
 |   |-- ui-model.json
 |   |-- interaction-model.json
+|   |-- behavior-ir.json
+|   |-- state-model.json
 |   +-- reconstruction-handoff.json
 |-- evidence/extracted/       Preserved archive contents
 |-- decompiled/functions/     Ghidra pseudocode by address
@@ -191,7 +200,7 @@ analysis-output/example/
 ~~~
 
 Additional JSON artifacts cover assets, frameworks, strings, decompilation
-status, recovered-code indexing, UI/interaction reconstruction, handoff planning, and unresolved findings. See
+status, recovered-code indexing, UI/interaction reconstruction, behavioral contracts, state models, handoff planning, and unresolved findings. See
 [schemas](schemas/) for the complete machine-readable contracts.
 
 ## Reading the results

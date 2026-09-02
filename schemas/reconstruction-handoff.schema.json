@@ -23,7 +23,7 @@
       "type": "object",
       "required": ["artifact", "path", "sha256", "size"],
       "properties": {
-        "artifact": {"enum": ["application", "assets", "recovered-code-index", "objc-type-flow", "native-type-flow", "platform-api-map", "ui-model", "interaction-model"]},
+        "artifact": {"enum": ["application", "assets", "recovered-code-index", "objc-type-flow", "native-type-flow", "platform-api-map", "ui-model", "interaction-model", "behavior-ir", "state-model"]},
         "path": {"type": "string", "pattern": "^analysis/[^/]+\\.json$"},
         "sha256": {"$ref": "#/$defs/sha256"},
         "size": {"type": "integer", "minimum": 1, "maximum": 536870912}
@@ -133,7 +133,7 @@
         "packet_id": {"type": "string", "pattern": "^reconstruction-packet:[0-9a-f]{20}$"},
         "packet_path": {"type": "string", "pattern": "^handoff/work-packets/[A-Za-z0-9._-]+\\.json$"},
         "screen_id": {"$ref": "#/$defs/nullableString"},
-        "kind": {"enum": ["screen", "component", "asset", "navigation", "interaction", "state", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"]},
+        "kind": {"enum": ["screen", "component", "asset", "navigation", "interaction", "behavior_contract", "state", "state_machine", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"]},
         "classification": {"$ref": "#/$defs/classification"},
         "phase": {"enum": ["exact_foundation", "exact_behavior", "exact_integration", "candidate_validation", "unresolved_research"]},
         "basis": {"type": "string", "minLength": 1}
@@ -184,8 +184,8 @@
                   "type": "array",
                   "prefixItems": [
                     {"const": "screen"}, {"const": "component"}, {"const": "asset"},
-                    {"const": "navigation"}, {"const": "interaction"}, {"const": "state"},
-                    {"const": "persistence"}, {"const": "networking"}, {"const": "platform_dependency"},
+                    {"const": "navigation"}, {"const": "interaction"}, {"const": "behavior_contract"},
+                    {"const": "state"}, {"const": "state_machine"}, {"const": "persistence"}, {"const": "networking"}, {"const": "platform_dependency"},
                     {"const": "code_unit"}, {"const": "type_context"}, {"const": "source_issue"}
                   ],
                   "items": false
@@ -193,7 +193,7 @@
               },
               "additionalProperties": false
             },
-            "input_artifacts": {"type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true, "items": {"$ref": "#/$defs/inputArtifact"}},
+            "input_artifacts": {"type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true, "items": {"$ref": "#/$defs/inputArtifact"}},
             "input_fingerprint": {"$ref": "#/$defs/sha256"},
             "application": {
               "type": "object",
@@ -208,7 +208,7 @@
             },
             "source_inventory": {
               "type": "object",
-              "required": ["archive_asset_count", "ui_asset_count", "screen_count", "component_count", "navigation_count", "interaction_count", "effect_count", "recovered_function_count", "recovered_method_count", "recovered_class_count", "objc_type_value_count", "native_type_value_count", "native_global_count", "native_layout_count", "platform_dependency_count", "upstream_hypothesis_count", "upstream_error_count"],
+              "required": ["archive_asset_count", "ui_asset_count", "screen_count", "component_count", "navigation_count", "interaction_count", "effect_count", "recovered_function_count", "recovered_method_count", "recovered_class_count", "objc_type_value_count", "native_type_value_count", "native_global_count", "native_layout_count", "platform_dependency_count", "behavior_contract_count", "state_variable_count", "state_transition_count", "state_machine_count", "async_callback_count", "upstream_hypothesis_count", "upstream_error_count"],
               "properties": {
                 "archive_asset_count": {"type": "integer", "minimum": 0},
                 "ui_asset_count": {"type": "integer", "minimum": 0},
@@ -225,6 +225,11 @@
                 "native_global_count": {"type": "integer", "minimum": 0},
                 "native_layout_count": {"type": "integer", "minimum": 0},
                 "platform_dependency_count": {"type": "integer", "minimum": 0},
+                "behavior_contract_count": {"type": "integer", "minimum": 0},
+                "state_variable_count": {"type": "integer", "minimum": 0},
+                "state_transition_count": {"type": "integer", "minimum": 0},
+                "state_machine_count": {"type": "integer", "minimum": 0},
+                "async_callback_count": {"type": "integer", "minimum": 0},
                 "upstream_hypothesis_count": {"type": "integer", "minimum": 0},
                 "upstream_error_count": {"type": "integer", "minimum": 0}
               },
@@ -244,11 +249,12 @@
                 "classification_counts": {"$ref": "#/$defs/classificationCounts"},
                 "work_item_kind_counts": {
                   "type": "object",
-                  "required": ["screen", "component", "asset", "navigation", "interaction", "state", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"],
+                  "required": ["screen", "component", "asset", "navigation", "interaction", "behavior_contract", "state", "state_machine", "persistence", "networking", "platform_dependency", "code_unit", "type_context", "source_issue"],
                   "properties": {
                     "screen": {"type": "integer", "minimum": 0}, "component": {"type": "integer", "minimum": 0},
                     "asset": {"type": "integer", "minimum": 0}, "navigation": {"type": "integer", "minimum": 0},
-                    "interaction": {"type": "integer", "minimum": 0}, "state": {"type": "integer", "minimum": 0},
+                    "interaction": {"type": "integer", "minimum": 0}, "behavior_contract": {"type": "integer", "minimum": 0},
+                    "state": {"type": "integer", "minimum": 0}, "state_machine": {"type": "integer", "minimum": 0},
                     "persistence": {"type": "integer", "minimum": 0}, "networking": {"type": "integer", "minimum": 0},
                     "platform_dependency": {"type": "integer", "minimum": 0}, "code_unit": {"type": "integer", "minimum": 0},
                     "type_context": {"type": "integer", "minimum": 0}, "source_issue": {"type": "integer", "minimum": 0}

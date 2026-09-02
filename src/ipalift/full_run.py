@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .behavior import lift_behavior
 from .cpp_model import recover_cpp_model
 from .dispatch import resolve_objc_dispatch
 from .ghidra import decompile_workspace
@@ -33,6 +34,7 @@ FULL_RUN_STAGES = (
     "infer-native-types",
     "recover-ui",
     "recover-interactions",
+    "lift-behavior",
     "build-handoff",
 )
 
@@ -86,5 +88,6 @@ def run_full_pipeline(
     execute(10, infer_native_types, workspace)
     execute(11, recover_ui, workspace)
     execute(12, recover_interactions, workspace)
-    final = execute(13, build_handoff, workspace)
+    execute(13, lift_behavior, workspace)
+    final = execute(14, build_handoff, workspace)
     return FullRunResult(workspace, tuple(completed), final.report_path)

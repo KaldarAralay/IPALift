@@ -38,6 +38,7 @@ class FullRunTests(unittest.TestCase):
             patch("ipalift.full_run.infer_native_types", side_effect=stage("infer-native-types")),
             patch("ipalift.full_run.recover_ui", side_effect=stage("recover-ui")),
             patch("ipalift.full_run.recover_interactions", side_effect=stage("recover-interactions")),
+            patch("ipalift.full_run.lift_behavior", side_effect=stage("lift-behavior")),
             patch("ipalift.full_run.build_handoff", side_effect=stage("build-handoff", final_result)),
         ):
             result = run_full_pipeline(
@@ -63,6 +64,7 @@ class FullRunTests(unittest.TestCase):
                 "infer-native-types",
                 "recover-ui",
                 "recover-interactions",
+                "lift-behavior",
                 "build-handoff",
             ],
             [call[0] for call in calls],

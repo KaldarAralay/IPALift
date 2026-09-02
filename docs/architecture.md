@@ -79,13 +79,16 @@ The pipeline layers are:
     notifications, timers, and callbacks to bounded call-graph slices and
     evidence-linked state, navigation, persistence, network, notification,
     timer, UI, and platform effects.
-17. **Reconstruction handoff** verifies shared artifact and pseudocode hashes,
-    converts the existing evidence graph into bounded per-screen/application
-    work packets, and orders exact implementation work before candidate
-    validation and unresolved research without adding behavior.
-18. **Plugin seam** accepts read-only `PluginContext` objects. Any future
+17. **Behavioral lifting** parses only hash-verified Ghidra pseudocode and joins
+    it with type-flow, call-graph, and interaction evidence to emit bounded
+    per-function contracts plus application/screen state-machine candidates.
+18. **Reconstruction handoff** verifies shared artifact and pseudocode hashes,
+    converts the evidence graph into bounded per-screen/application work
+    packets, and orders exact implementation work before candidate validation
+    and unresolved research without adding behavior.
+19. **Plugin seam** accepts read-only `PluginContext` objects. Any future
     game-, engine-, or format-specific inference belongs in a plugin.
-19. **Reports** separate verified `facts`, inferred `hypotheses`, and `errors`
+20. **Reports** separate verified `facts`, inferred `hypotheses`, and `errors`
     in versioned deterministic JSON envelopes.
 
 Gameplay reconstruction, claims of original-source recovery, and Windows-port
@@ -408,18 +411,41 @@ trigger to handler to effects with exact, candidate-set, or unresolved
 classification. Static slices do not claim runtime execution, branch coverage,
 or original-source recovery.
 
+## Behavioral lifting boundary
+
+`lift-behavior` is a deterministic consumer of `functions.json`,
+`callgraph.json`, `recovered-code-index.json`, `objc-dispatch.json`,
+`objc-type-flow.json`, `platform-api-map.json`, `native-type-flow.json`,
+`ui-model.json`, and `interaction-model.json`. It fingerprints all nine reports,
+rejects stale downstream references, and accepts pseudocode only when its
+workspace-relative path, byte size, and SHA-256 digest match the recovered-code
+index.
+
+The stage emits `analysis/behavior-ir.json` with per-function signatures,
+parameters, return expressions, branch guards, constants, state reads/writes,
+direct and dynamic call candidates, and asynchronous callbacks. It emits
+`analysis/state-model.json` with evidence-linked state variables, screen states,
+transition candidates, and application/screen machines. The versioned policy
+bounds reports, pseudocode, records, and evidence links.
+
+Decompiler constructs are implementation candidates, not recovered original
+source. Static call paths and interaction chains do not prove runtime execution,
+guard-to-effect paths, initial state, or transition reachability. Candidate sets
+are never promoted, and identifiers are not used to invent behavior.
+
 ## Reconstruction handoff boundary
 
 `build-handoff` is the final deterministic consumer of `application.json`,
 `assets.json`, `recovered-code-index.json`, `objc-type-flow.json`,
 `native-type-flow.json`, `platform-api-map.json`, `ui-model.json`, and
-`interaction-model.json`. It fingerprints all eight reports, rejects stale
+`interaction-model.json`, `behavior-ir.json`, and `state-model.json`. It fingerprints all ten reports, rejects stale
 shared-input references, and revalidates every successful pseudocode path, size,
 and hash named by the recovered-code index. It never modifies an upstream
 artifact.
 
 Work items mechanically cover screens, components and layout, resource/asset
-references, navigation, interactions, state, persistence, networking, platform
+references, navigation, interactions, function contracts, state variables,
+transition candidates, state machines, persistence, networking, platform
 dependencies, recovered code units, type context, and upstream source issues.
 Each item carries exact source JSON pointers and artifact hashes. Candidate type,
 handler, dispatch, and resource alternatives remain explicit candidate sets;

@@ -46,8 +46,8 @@ class RunAllCLITests(unittest.TestCase):
         self.assertEqual(45, kwargs["function_timeout"])
         self.assertEqual(7200, kwargs["analysis_timeout"])
         output = stdout.getvalue()
-        self.assertIn("[1/13] analyze", output)
-        self.assertIn("[13/13] build-handoff", output)
+        self.assertIn("[1/14] analyze", output)
+        self.assertIn("[14/14] build-handoff", output)
         self.assertIn("Completed full IPALift pipeline", output)
         self.assertIn(str(report), output)
 

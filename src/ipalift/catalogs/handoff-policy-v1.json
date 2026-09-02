@@ -1,6 +1,6 @@
 {
   "catalog_id": "ipalift-reconstruction-handoff-policy",
-  "catalog_version": "1.0.0",
+  "catalog_version": "1.1.0",
   "description": "App-neutral ordering and resource bounds for reconstruction handoff packets.",
   "bounds": {
     "max_input_report_bytes": 536870912,
@@ -25,7 +25,9 @@
     "asset",
     "navigation",
     "interaction",
+    "behavior_contract",
     "state",
+    "state_machine",
     "persistence",
     "networking",
     "platform_dependency",
@@ -41,7 +43,9 @@
     "type_context": "exact_foundation",
     "navigation": "exact_behavior",
     "interaction": "exact_behavior",
+    "behavior_contract": "exact_behavior",
     "state": "exact_behavior",
+    "state_machine": "exact_behavior",
     "persistence": "exact_integration",
     "networking": "exact_integration",
     "platform_dependency": "exact_integration",

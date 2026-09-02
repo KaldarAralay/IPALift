@@ -1,0 +1,31 @@
+{
+  "catalog_id": "ipalift-behavior-policy",
+  "catalog_version": "1.0.0",
+  "description": "App-neutral bounds and evidence rules for deterministic behavioral lifting.",
+  "bounds": {
+    "max_input_report_bytes": 536870912,
+    "max_total_input_report_bytes": 2147483648,
+    "max_pseudocode_bytes_per_function": 16777216,
+    "max_total_pseudocode_bytes": 268435456,
+    "max_functions": 100000,
+    "max_parameters_per_function": 128,
+    "max_branch_guards_per_function": 4096,
+    "max_constants_per_function": 8192,
+    "max_state_accesses_per_function": 8192,
+    "max_call_edges": 500000,
+    "max_async_callbacks": 100000,
+    "max_transitions": 100000,
+    "max_evidence_links_per_record": 32
+  },
+  "async_trigger_kinds": [
+    "callback",
+    "notification",
+    "timer"
+  ],
+  "branch_keywords": [
+    "if",
+    "switch",
+    "while",
+    "for"
+  ]
+}
